@@ -12,6 +12,20 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}\\app.js"
+        },
+        {
+            "name": "Nodemon Launch Server",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "nodemon",
+            "runtimeArgs": [
+                "--inspect=3000"
+            ],
+            "program": "${workspaceRoot}/app.js",
+            "restart": true,
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
         }
     ]
 }
