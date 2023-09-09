@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>OneShot Tester</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+</head>
+
+<body>
+    <div id="outer-frame" class="flex">
+        <!-- Sidebar -->
+        <div id="sidebar" class="w-1/4 bg-gray-300 p-4">
+            <button id="basic" class="w-full p-2 bg-blue-500 text-white mb-2">/user/info</button>
+            <button id="version" class="w-full p-2 bg-blue-500 text-white mb-2">/version</button>
+        </div>
+        <!-- Content -->
+        <div id="content" class="w-3/4 p-4">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+    </div>
+    <div id="firebaseui-auth-container"></div>
+    <button id="logout-button" onclick="firebase.auth().signOut();"
+        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"> Logout </button>
+
+    <script>
+        let basicurl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+        $('#basic').click(_ => {
+            _USER.getIdToken()
+                .then(accessToken => fetch(basicurl + "/user/info", {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken
+                        }
+                    })
+                )
+                .then(response => response.text())
+                .then(data => {
+                    $('#content').html(data);
+                });
+        });
+
+        $('#version').click(_ => {
+            fetch(basicurl + "/version")
+                .then(response => response.text())
+                .then(data => {
+                    $('#content').html(data);
+                });
+        });
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIjVikqQjo1G75nOVkf9Mz-CxeXcPnRDw",
+            authDomain: "oneshot-79f76.firebaseapp.com",
+            projectId: "oneshot-79f76",
+            storageBucket: "oneshot-79f76.appspot.com",
+            messagingSenderId: "975858570575",
+            appId: "1:975858570575:web:c3fb16e6bf801e9a6c213a"
+        };
+        var uiConfig = {
+            signInSuccessUrl: basicurl + '/test.html',
+            signInOptions: [
+                // Leave the lines as is for the providers you want to offer your users.
+                firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+            ],
+            // tosUrl and privacyPolicyUrl accept either url string or a callback
+            // function.
+            // Terms of service url/callback.
+            tosUrl: 'thewebmaker.it',
+            // Privacy policy url/callback.
+            privacyPolicyUrl: function () {
+                window.location.assign('thewebmaker.it');
+            }
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        // Initialize the FirebaseUI Widget using Firebase.
+        var ui = new firebaseui.auth.AuthUI(firebase.auth());
+        // The start method will wait until the DOM is loaded.
+        ui.start('#firebaseui-auth-container', uiConfig);
+
+        let _USER = null;
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in.
+                _USER = user;
+                console.log(_USER);
+                console.log('User is signed in');
+            } else {
+                // User is signed out.
+                console.log('User is signed out');
+            }
+        });
+    </script>
+</body>
+
+</html>
+</body>
+
+</html>
