@@ -25,7 +25,7 @@ app.use('/api/rating', authenticate, ratingRoutes);
 app.get('/version', (req, res) => {
     // get app version from package.json
     const appVersion = require('./package.json').version
-    const appStuff = firebaseAdmin.app()
+    const appStuff = global.firebase.app()
     // out app name and version
     res.send(`Running ${appStuff.name} on v${appVersion} 😍`)
 })
