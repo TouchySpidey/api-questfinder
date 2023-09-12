@@ -5,6 +5,6 @@ const authenticate = require('../authMiddleware');
 const router = express.Router();
 
 router.get('/get-nickname', authenticate, getNickname);
-router.get('/set-nickname', authenticate, setNickname);
+router.post('/set-nickname', authenticate, setNickname);
 
 module.exports = router;

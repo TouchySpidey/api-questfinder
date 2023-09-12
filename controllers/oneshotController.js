@@ -1,5 +1,3 @@
-const firebaseAdmin = require('firebase-admin');
-const db = firebaseAdmin.database();
 
 exports.postOneshot = async (req, res) => {
     const uid = req.uid;  // Authenticated user's UID
@@ -37,7 +35,7 @@ exports.postOneshot = async (req, res) => {
         };
 
         // Save the oneshot data in Firebase and get the auto-generated key
-        const oneshotsRef = db.ref('oneshots');
+        const oneshotsRef = global.db.ref('oneshots');
         const newOneshotRef = oneshotsRef.push();
         await newOneshotRef.set(newOneshot);
 
@@ -57,7 +55,7 @@ exports.viewOneshot = async (req, res) => {
     const oneshotUID = req.params.oneshotUID;  // Assuming the UID is passed as a URL parameter
 
     try {
-        const oneshotRef = db.ref(`oneshots/${oneshotUID}`);
+        const oneshotRef = global.db.ref(`oneshots/${oneshotUID}`);
         const snapshot = await oneshotRef.once("value");
         const oneshotData = snapshot.val();
 
@@ -66,7 +64,7 @@ exports.viewOneshot = async (req, res) => {
         }
 
         // Get the number of 'present' and 'tentative' participants
-        const participationRef = db.ref(`participations`);
+        const participationRef = global.db.ref(`participations`);
         const participationSnapshot = await participationRef.orderByChild("oneshot").equalTo(oneshotUID).once("value");
         const participationData = participationSnapshot.val();
 
@@ -109,7 +107,7 @@ exports.editOneshot = async (req, res) => {
     if (validationResult) return;
 
     try {
-        const oneshotRef = db.ref(`oneshots/${oneshotUID}`);
+        const oneshotRef = global.db.ref(`oneshots/${oneshotUID}`);
         const snapshot = await oneshotRef.once("value");
         const oneshotData = snapshot.val();
 
@@ -125,7 +123,7 @@ exports.editOneshot = async (req, res) => {
         if (!oneshotData.previous_versions) {
             oneshotData.previous_versions = {};
         }
-        const timestamp = new Date().toISOString();
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
         oneshotData.previous_versions[timestamp] = {
             timestamp: oneshotData.timestamp,
             date: oneshotData.date,
@@ -159,7 +157,7 @@ exports.editOneshot = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).send("Internal Server Error");
+        res.status(500).send("Internal Server Error: " + error.message);
     }
 };
 
@@ -168,7 +166,7 @@ exports.deleteOneshot = async (req, res) => {
     const oneshotUID = req.params.oneshotUID;  // Assuming the UID is passed as a URL parameter
 
     try {
-        const oneshotRef = db.ref(`oneshots/${oneshotUID}`);
+        const oneshotRef = global.db.ref(`oneshots/${oneshotUID}`);
         const snapshot = await oneshotRef.once("value");
         const oneshotData = snapshot.val();
 
@@ -200,7 +198,7 @@ exports.deleteOneshot = async (req, res) => {
 
 const handleParticipationStatus = async (status, uid, oneshotUID, res) => {
     // Fetch the oneshot data to check the max_players
-    const oneshotRef = db.ref(`oneshots/${oneshotUID}`);
+    const oneshotRef = global.db.ref(`oneshots/${oneshotUID}`);
     const snapOneshot = await oneshotRef.once("value");
     const oneshotData = snapOneshot.val();
 
@@ -212,7 +210,7 @@ const handleParticipationStatus = async (status, uid, oneshotUID, res) => {
         return res.status(403).send("You're the owner, you can't interact with the oneshot");
     }
     
-    const participationRef = db.ref(`participations`);
+    const participationRef = global.db.ref(`participations`);
     const query = participationRef.orderByChild("oneshot").equalTo(oneshotUID);
     const snapshot = await query.once("value");
     let participationData = snapshot.val();
@@ -284,7 +282,7 @@ function validateOneshotInput(res, { date, time, title, max_players, out_players
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return res.status(400).send("Invalid date format");
     }
-    if (!time || !/^\d{2}:\d{2}:\d{2}$/.test(time)) {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) {
         return res.status(400).send("Invalid time format");
     }
     if (!title || title.length > 50) {

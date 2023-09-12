@@ -1,10 +1,7 @@
-const firebaseAdmin = require('firebase-admin');
-const db = firebaseAdmin.database();
-
 exports.getNickname = async (req, res) => {
     const uid = req.uid;
     try {
-        const userRef = db.ref(`users/${uid}`);
+        const userRef = global.db.ref(`users/${uid}`);
         userRef.once("value", snapshot => {
             const userData = snapshot.val();
             if (userData && userData.nickname) {
@@ -21,7 +18,7 @@ exports.getNickname = async (req, res) => {
 
 exports.setNickname = async (req, res) => {
     const uid = req.uid;
-    const nickname = req.query.nickname;
+    const nickname = req.body.nickname;
 
     // only allow alphanumeric characters, dashes and underscores
     if (!nickname.match(/^[a-zA-Z0-9-_]+$/)) {
@@ -29,7 +26,7 @@ exports.setNickname = async (req, res) => {
     }
 
     try {
-        const usersRef = db.ref('users');
+        const usersRef = global.db.ref('users');
         let unique = false;
         let hashnum = Math.floor(Math.random() * 9000) + 1000;
         const original_random = hashnum;

@@ -1,6 +1,6 @@
-const firebaseAdmin = require('firebase-admin');
-const db = firebaseAdmin.database();
 
-exports.rateUser = async (req, res) => {}
+exports.rateUser = async (req, res) => {
+    const uid = req.uid;
+}
 
 exports.unrateUser = async (req, res) => {}
