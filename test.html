@@ -42,131 +42,131 @@
         let basicurl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
         $('#setNickname').click(_ => {
             _USER.getIdToken()
-                .then(accessToken => fetch(basicurl + "/api/user/set-nickname", {
-                        method: 'POST',    
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            nickname: document.getElementById('custom').value,
-                        }),
-                    })
-                )
-                .then(response => response.json())
-                .then(data => {
-                    $('#content').html(JSON.stringify(data, null, 4));
-                });
+            .then(accessToken => fetch(basicurl + "/api/user/set-nickname", {
+                method: 'POST',    
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nickname: document.getElementById('custom').value,
+                }),
+            })
+            )
+            .then(response => response.json())
+            .then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            });
         });
         
         $('#getNickname').click(_ => {
             _USER.getIdToken()
-                .then(accessToken => fetch(basicurl + "/api/user/get-nickname", {
-                        method: 'GET',    
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json',
-                        },
-                    })
-                )
-                .then(response => response.json())
-                .then(data => {
-                    $('#content').html(JSON.stringify(data, null, 4));
-                });
+            .then(accessToken => fetch(basicurl + "/api/user/get-nickname", {
+                method: 'GET',    
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            )
+            .then(response => response.json())
+            .then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            });
         });
         
         $('#viewOneshot').click(_ => {
             _USER.getIdToken()
-                .then(accessToken => fetch(basicurl + "/api/oneshot/view/" + document.getElementById("custom").value, {
-                        method: 'GET',    
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json',
-                        },
-                    })
-                )
-                .then(response => response.json())
-                .then(data => {
-                    $('#content').html(JSON.stringify(data, null, 4));
-                });
+            .then(accessToken => fetch(basicurl + "/api/oneshot/view/" + document.getElementById("custom").value, {
+                method: 'GET',    
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            )
+            .then(response => response.json())
+            .then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            });
         });
         
         $('#editOneshot').click(_ => {
             _USER.getIdToken()
-                .then(accessToken => fetch(basicurl + "/api/oneshot/edit/" + document.getElementById("custom").value, {
-                        method: 'PUT',    
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            date: '2023-09-23',
-                            place: 'Spresiano city',
-                            title: 'Una bella sorpresa',
-                            description: 'Vi svegliate nudi',
-                            time: '20:00',
-                            max_players: 2,
-                            out_players: 2,
-                            characters_level: 3,
-                            extra_info: 'No fumatori, alcol ben accetto',
-                        }),
-                    })
-                )
-                .then(response => response.json())
-                .then(data => {
-                    $('#content').html(JSON.stringify(data, null, 4));
-                });
+            .then(accessToken => fetch(basicurl + "/api/oneshot/edit/" + document.getElementById("custom").value, {
+                method: 'PUT',    
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: '2023-09-23',
+                    place: 'Spresiano city',
+                    title: 'Una bella sorpresa',
+                    description: 'Vi svegliate nudi',
+                    time: '20:00',
+                    max_players: 2,
+                    out_players: 2,
+                    characters_level: 3,
+                    extra_info: 'No fumatori, alcol ben accetto',
+                }),
+            })
+            )
+            .then(response => response.json())
+            .then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            });
         });
         
         $('#postOneshot').click(_ => {
             _USER.getIdToken()
-                .then(accessToken => fetch(basicurl + "/api/oneshot/post", {
-                        method: 'POST',    
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            date: '2023-09-23',
-                            place: 'Spresiano city',
-                            title: 'Una brutta sorpresa',
-                            description: 'Vi svegliate in una stanza completamente buia',
-                            time: '20:00',
-                            max_players: 2,
-                            out_players: 2,
-                            characters_level: 3,
-                            extra_info: 'No fumatori, birra ben accetta',
-                        }),
-                    })
-                )
-                .then(response => response.json())
-                .then(data => {
-                    $('#content').html(JSON.stringify(data, null, 4));
-                });
+            .then(accessToken => fetch(basicurl + "/api/oneshot/post", {
+                method: 'POST',    
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: '2023-09-23',
+                    place: 'Spresiano city',
+                    title: 'Una brutta sorpresa',
+                    description: 'Vi svegliate in una stanza completamente buia',
+                    time: '20:00',
+                    max_players: 2,
+                    out_players: 2,
+                    characters_level: 3,
+                    extra_info: 'No fumatori, birra ben accetta',
+                }),
+            })
+            )
+            .then(response => response.json())
+            .then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            });
         });
         
         $('#deleteOneshot').click(_ => {
             _USER.getIdToken()
-                .then(accessToken => fetch(basicurl + "/api/oneshot/delete/" + document.getElementById("custom").value, {
-                        method: 'DELETE',    
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken,
-                            'Content-Type': 'application/json',
-                        },
-                    })
-                )
-                .then(response => response.json())
-                .then(data => {
-                    $('#content').html(JSON.stringify(data, null, 4));
-                });
+            .then(accessToken => fetch(basicurl + "/api/oneshot/delete/" + document.getElementById("custom").value, {
+                method: 'DELETE',    
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            )
+            .then(response => response.json())
+            .then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            });
         });
-
+        
         $('#version').click(_ => {
             fetch(basicurl + "/version")
-                .then(response => response.text())
-                .then(data => {
-                    $('#content').html(data);
-                });
+            .then(response => response.text())
+            .then(data => {
+                $('#content').html(data);
+            });
         });
 
         // Your web app's Firebase configuration
