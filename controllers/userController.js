@@ -5,7 +5,7 @@ exports.getNickname = async (req, res) => {
         userRef.once("value", snapshot => {
             const userData = snapshot.val();
             if (userData && userData.nickname) {
-                res.status(200).json({ nickname: userData.nickname });
+                res.status(200).json({ nickname: userData.nickname, hashnum: userData.hashnum });
             } else {
                 res.status(200).json(null);
             }

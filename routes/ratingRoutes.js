@@ -2,7 +2,7 @@ const express = require('express');
 const {
     rateUser,
     unrateUser
-} = require('../controllers/ratingController');
+} = require.main.require('./controllers/ratingController');
 const authenticate = require('../authMiddleware');
 
 const router = express.Router();

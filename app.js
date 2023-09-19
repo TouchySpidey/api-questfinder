@@ -4,6 +4,8 @@ const authenticate = require('./authMiddleware');
 const oneshotRoutes = require('./routes/oneshotRoutes');
 const userRoutes = require('./routes/userRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
+const notificationsSubsRoutes = require('./routes/notificationsSubsRoutes');
+const fcm = require('./fcm/manager');
 const app = express()
 const port = 8080
 
@@ -21,6 +23,7 @@ app.use(express.json());
 app.use('/api/oneshot', authenticate, oneshotRoutes);
 app.use('/api/user', authenticate, userRoutes);
 app.use('/api/rating', authenticate, ratingRoutes);
+app.use('/api/notifications', authenticate, notificationsSubsRoutes);
 
 app.get('/version', (req, res) => {
     // get app version from package.json
@@ -33,7 +36,10 @@ app.get('/version', (req, res) => {
 // this is for debugging purposes only
 app.get('/test.html', (req, res) => {
     res.sendFile(__dirname + '/test.html');
-});
+})
+
+// custom docs on /api-docs
+require('./api-docs')(app);
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)

@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging-compat.js"></script>
     <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
 </head>
 
@@ -27,6 +28,7 @@
             <button id="deleteOneshot" class="w-full p-2 bg-blue-500 text-white mb-2">/api/oneshot/delete</button>
             <button id="getNickname" class="w-full p-2 bg-blue-500 text-white mb-2">/api/user/get-nickname</button>
             <button id="setNickname" class="w-full p-2 bg-blue-500 text-white mb-2">/api/user/set-nickname</button>
+            <button id="subscribeNotifications" class="w-full p-2 bg-green-500 text-white mb-2">Subscribe to notifications</button>
         </div>
         <input id="custom" type="text" placeholder="You only get one shot" />
         <!-- Content -->
@@ -40,6 +42,31 @@
 
     <script>
         let basicurl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+        $('#subscribeNotifications').click(_ => {
+            _USER.getIdToken()
+            .then(accessToken => fetch(basicurl + "/api/notifications/subscribe", {
+                method: "POST",
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: 'u9yd98t6q72h9un0b87g1ty82u9dycewjiow',
+                    type: 'newOneshot',
+                    viaEmail: true,
+                    preferences: {
+                        city: "Spresiano",
+                        radius: 10,
+                        weekGrid: [
+                            ["tuesday", 19, 23],
+                        ],
+                    }
+                })
+            }).then(response => response.json()).then(data => {
+                $('#content').html(JSON.stringify(data, null, 4));
+            }));
+        })
+        
         $('#setNickname').click(_ => {
             _USER.getIdToken()
             .then(accessToken => fetch(basicurl + "/api/user/set-nickname", {

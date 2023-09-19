@@ -7,7 +7,7 @@ const {
     joinOneshot,
     setTentative,
     leaveOneshot
-} = require('../controllers/oneshotController');
+} = require.main.require('./controllers/oneshotController');
 const authenticate = require('../authMiddleware');
 
 const router = express.Router();

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Docs</title>
+    <!-- <link rel="stylesheet" href="css/style.css"> -->
+</head>
+<body>
+    <h1>API Docs</h1>
+    <pre id="docs"></pre>
+    <script>
+        let docs = fetch('/api-docs')
+        .then(res => res.json())
+        .then(data => {
+            let docs = JSON.stringify(data, null, 4);
+            document.getElementById('docs').innerHTML = docs;
+        });
+    </script>
+</html>

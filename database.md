@@ -6,6 +6,7 @@ database = {
             nickname: {nickname},
             hashnum: {hashnum},
             timestamp: {yyyy-mm-dd H:i:s},
+            email: {email},
         }
     },
     oneshots: {
@@ -34,6 +35,34 @@ database = {
             previous_versions: {}
         }
     },
+    notificationsSent: {
+        {notification uid}: {
+            type: {string},
+            notificationSubscription: {notificationSubscription uid},
+            timestamp: {yyyy-mm-dd H:i:s},
+            data: {json}
+            sentViaToken: bool,
+            sentViaEmail: bool
+        }
+    },
+    notificationsSubscription: {
+        {notificationSubscription uid}: {
+            type: {string},
+            user: {user uid},
+            token: {token},
+            email: {email},
+            ----------------------
+            when: {
+                {weekday}: {
+                    {hour}: {bool},
+                }
+            },
+            where: {
+                place: {google maps string},
+                radius: {int}
+            }
+        }
+    }
     ratings: {
         {rating-guid}: {
             timestamp: {yyyy-mm-dd H:i:s},

@@ -1,5 +1,5 @@
 const express = require('express');
-const { getNickname, setNickname } = require('../controllers/userController');
+const { getNickname, setNickname } = require.main.require('./controllers/userController');
 const authenticate = require('../authMiddleware');
 
 const router = express.Router();
