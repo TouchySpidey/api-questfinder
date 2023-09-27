@@ -39,6 +39,8 @@
     <div id="firebaseui-auth-container"></div>
     <button id="logout-button" onclick="firebase.auth().signOut();"
         class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"> Logout </button>
+    <button onclick="validateAddress('via gorizia spresiano')"
+        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"> validateaddress </button>
 
     <script>
         let basicurl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
@@ -239,6 +241,46 @@
                 console.log('User is signed out');
             }
         });
+
+        function validateAddress(address) {
+            // prompt the user with a choice: use the browser's geolocation or type in their address and let's hope they are lazy and choose the first option
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    alert(position.coords.latitude + ',' + position.coords.longitude)
+                },
+                () => {
+                    alert('Position could not be determined.');
+                }
+            );
+            let key = 'AIzaSyCIWqu8UMh3Q_X-xZSVAnN6RP4SLddQExg';
+            let endpoint = `https://addressvalidation.googleapis.com/v1:validateAddress?key=${key}`;
+            let params = {
+                address: {
+                    regionCode: 'IT',
+                    addressLines: [address],
+                }
+            };
+            $.ajax({
+                url: endpoint,
+                type: 'POST',
+                data: JSON.stringify(params),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function (data) {
+                    // put .address.formattedAddress in #address
+                    // then put .geocode.location (which has .latitude and .longitude) in const location, send it to the server
+                    console.log(data);
+                    data = data.result;
+                    let address = data.address.formattedAddress;
+                    let location = data.geocode.location;
+                    alert(address);
+                    console.log(location);
+                },
+                error: function (data) {
+                    console.log(data);
+                }
+            });
+        }
     </script>
 </body>
 

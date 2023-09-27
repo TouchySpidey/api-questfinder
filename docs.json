@@ -6,7 +6,11 @@
             "description": "Post a new oneshot",
             "body": {
                 "date": "yyyy-mm-dd",
-                "place": "Some string Google understands",
+                "place": {
+                    "name": "formatted address",
+                    "lat": "float",
+                    "lng": "float"
+                },
                 "title": "up to 50 chars",
                 "description": "up to 500 chars",
                 "time": "hh:mm (24h)",
@@ -142,9 +146,9 @@
         }
     },
     "api/user": {
-        "/get-nickname": {
+        "/get/:userFID": {
             "method": "GET",
-            "description": "Retrieve the user's nickname",
+            "description": "Retrieve the user's data",
             "response": {
                 "code": {
                     "200": "OK",
@@ -156,9 +160,9 @@
                 }
             }
         },
-        "/set-nickname": {
+        "/update": {
             "method": "POST",
-            "description": "Set the user's nickname",
+            "description": "Update user's nickname and / or email",
             "body": {
                 "nickname": "string",
                 "hashnum": "4 digits code"

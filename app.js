@@ -1,13 +1,13 @@
 const express = require('express')
 const cors = require('cors')
-const authenticate = require('./authMiddleware');
-const oneshotRoutes = require('./routes/oneshotRoutes');
-const userRoutes = require('./routes/userRoutes');
-const ratingRoutes = require('./routes/ratingRoutes');
-const notificationsSubsRoutes = require('./routes/notificationsSubsRoutes');
-const fcm = require('./fcm/manager');
+
 const app = express()
 const port = 8080
+app.use(cors());
+app.use(express.json());
+
+// handle routes
+require('./routes')(app);
 
 // firebase
 global.firebase = require('firebase-admin');
@@ -15,15 +15,7 @@ global.firebase.initializeApp({
     databaseURL: 'https://oneshot-79f76-default-rtdb.europe-west1.firebasedatabase.app/'
 });
 global.db = global.firebase.database();
-
-app.use(cors());
-app.use(express.json());
-
-// Use Route Files
-app.use('/api/oneshot', authenticate, oneshotRoutes);
-app.use('/api/user', authenticate, userRoutes);
-app.use('/api/rating', authenticate, ratingRoutes);
-app.use('/api/notifications', authenticate, notificationsSubsRoutes);
+const fcm = require('./fcm/manager');
 
 app.get('/version', (req, res) => {
     // get app version from package.json

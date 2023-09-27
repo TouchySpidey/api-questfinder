@@ -3,10 +3,11 @@
 database = {
     users: {
         {user uid from firebase}: {
+            timestamp: {yyyy-mm-dd H:i:s},
             nickname: {nickname},
             hashnum: {hashnum},
-            timestamp: {yyyy-mm-dd H:i:s},
             email: {email},
+            previous_versions: {},
         }
     },
     oneshots: {
@@ -14,7 +15,11 @@ database = {
             timestamp: {yyyy-mm-dd H:i:s},
             owner: {user uid of the game master},
             date: {yyyy-mm-dd},
-            place: {some string that google places understands},
+            place: {
+                address: {string},
+                lat: {float},
+                lng: {float},
+            },
             title: {string},
             description: {long string},
             time: {H:i:s},
@@ -28,18 +33,18 @@ database = {
     },
     participations: {
         {participation-guid}: {
+            timestamp: {yyyy-mm-dd H:i:s},
             oneshot: {oneshot uid},
             user: {user uid},
-            timestamp: {yyyy-mm-dd H:i:s},
             status: {enum: present, tentative, leave},
             previous_versions: {}
         }
     },
     notificationsSent: {
         {notification uid}: {
+            timestamp: {yyyy-mm-dd H:i:s},
             type: {string},
             notificationSubscription: {notificationSubscription uid},
-            timestamp: {yyyy-mm-dd H:i:s},
             data: {json}
             sentViaToken: bool,
             sentViaEmail: bool
@@ -62,7 +67,7 @@ database = {
                 radius: {int}
             }
         }
-    }
+    },
     ratings: {
         {rating-guid}: {
             timestamp: {yyyy-mm-dd H:i:s},
