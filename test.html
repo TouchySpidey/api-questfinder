@@ -21,6 +21,7 @@
     <div id="outer-frame" class="flex">
         <!-- Sidebar -->
         <div id="sidebar" class="w-1/4 bg-gray-300 p-4">
+            <button id="copyToken" class="w-full p-2 bg-amber-500 text-white mb-2">Copy Token</button>
             <button id="version" class="w-full p-2 bg-blue-500 text-white mb-2">/version</button>
             <button id="viewOneshot" class="w-full p-2 bg-blue-500 text-white mb-2">/api/oneshot/view</button>
             <button id="postOneshot" class="w-full p-2 bg-blue-500 text-white mb-2">/api/oneshot/post</button>
@@ -44,6 +45,13 @@
 
     <script>
         let basicurl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+        $('#copyToken').click(_ => {
+            _USER.getIdToken()
+            .then(accessToken => {
+                navigator.clipboard.writeText(accessToken);
+            });
+        })
+        
         $('#subscribeNotifications').click(_ => {
             _USER.getIdToken()
             .then(accessToken => fetch(basicurl + "/api/notifications/subscribe", {

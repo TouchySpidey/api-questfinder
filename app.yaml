@@ -1,2 +1,5 @@
 runtime: nodejs18
 service: default
+
+env_variables:
+  APP_ENVIRONMENT: gae-production

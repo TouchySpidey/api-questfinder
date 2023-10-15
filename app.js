@@ -1,38 +1,44 @@
-const express = require('express')
-const cors = require('cors')
+global.APP_ENVIRONMENT = process.env.APP_ENVIRONMENT ?? 'dev';
 
-const app = express()
-const port = 8080
+const express = require('express');
+const cors = require('cors');
+const http = require('http');
+const initSocketIo = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const socketIo = initSocketIo(server, {
+    cors: {
+        origin: "*", // Replace with your frontend URL
+        methods: ["GET", "POST"]
+    }
+});
+
+const port = 8080;
 app.use(cors());
 app.use(express.json());
 
-// handle routes
-require('./routes')(app);
+// handle websockets
+require('./server_utils/webSockets')(socketIo);
 
 // firebase
 global.firebase = require('firebase-admin');
-global.firebase.initializeApp({
-    databaseURL: 'https://oneshot-79f76-default-rtdb.europe-west1.firebasedatabase.app/'
-});
-global.db = global.firebase.database();
-const fcm = require('./fcm/manager');
+global.firebase.initializeApp();
 
-app.get('/version', (req, res) => {
-    // get app version from package.json
-    const appVersion = require('./package.json').version
-    const appStuff = global.firebase.app()
-    // out app name and version
-    res.send(`Running ${appStuff.name} on v${appVersion} 😍`)
-})
+// google services
+require('./server_utils/googleServices');
 
-// this is for debugging purposes only
-app.get('/test.html', (req, res) => {
+// database
+require('./server_utils/database')(app);
+
+app.get('/', (req, res) => {
+    // test.html
     res.sendFile(__dirname + '/test.html');
-})
+});
 
-// custom docs on /api-docs
-require('./api-docs')(app);
+// handle routes
+require('./routers/routers')(app);
 
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
+server.listen(port, () => {
+    console.log(`App listening on port ${port}`);
+});
