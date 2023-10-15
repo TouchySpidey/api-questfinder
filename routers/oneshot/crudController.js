@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const { validateQuery, buildQuery } = require('./utils');
+const { validateQuery, getList } = require('./utils');
 const { messageToDB: sendMessage, listMessages } = require.main.require('./routers/messages/utils');
 const { statuses } = require('./interactionController');
 
@@ -141,9 +141,7 @@ module.exports.list = async (req, res) => {
         return res.status(400).send("Invalid query");
     }
 
-    const query = buildQuery(validatedQuery);
-    const [ rows ] = await global.db.execute(query);
-    const list = rows;
+    const list = await getList(validatedQuery, user.UID);
 
     res.status(200).send({ list });
 }

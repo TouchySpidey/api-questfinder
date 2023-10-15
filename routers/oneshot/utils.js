@@ -1,23 +1,54 @@
-module.exports.buildQuery = (validatedQuery) => {
+module.exports.getList = async (validatedQuery, userUID = null) => {
     try {
         const { days, place, radius, system, time } = validatedQuery;
+
+        const query = `SELECT oneshots.*, master.nickname AS masterNickname, join_requests.status AS joinStatus, appointmentOn < UTC_TIMESTAMP() AS isPast
+        FROM oneshots
+        LEFT JOIN join_requests ON oneshots.UID = join_requests.oneshotUID AND join_requests.userUID = ?
+        LEFT JOIN users master ON master.UID = oneshots.masterUID
+        WHERE isDeleted = 0
+        AND (? = 1 OR WEEKDAY(appointmentOn) + 1 IN (?))
+        AND (? = 1 OR TIME(appointmentOn) BETWEEN ? AND ?)
+        AND (? = 1 OR ST_Distance_Sphere(POINT(placeLat, placeLng), POINT(?, ?)) / 1000 <= ?)
+        ORDER BY appointmentOn ASC`;
+
+        let params = { };
         
-        let query = 'SELECT oneshots.* FROM oneshots WHERE isDeleted = 0';
         if (days) {
-            query += ` AND WEEKDAY(appointmentOn) + 1 IN (${ days.join(',') })`;
+            params.days = days.join(',');
+        } else {
+            params.skipDays = 1;
         }
         if (time) {
-            query += ` AND TIME(appointmentOn) BETWEEN '${ time.from }' AND '${ time.to }'`;
+            params.timeFrom = time.from;
+            params.timeTo = time.to;
+        } else {
+            params.skipTime = 1;
         }
         if (place) {
-            query += ` AND ST_Distance_Sphere(POINT(placeLat, placeLng), POINT(${ place.lat }, ${ place.lng })) / 1000 <= ${ radius + 1 }`;
+            params.placeLat = place.lat;
+            params.placeLng = place.lng;
+            params.radius = radius;
+        } else {
+            params.skipPlace = 1;
         }
-        // if (system) { // TODO: implement systems
-        //     query += ` AND system IN (${ system.join(',') })`;
-        // }
-        query += ' ORDER BY appointmentOn ASC';
 
-        return query;
+        const queryParams = [
+            userUID ?? null,
+            params.skipDays ?? 0,
+            params.days ?? null,
+            params.skipTime ?? 0,
+            params.timeFrom ?? null,
+            params.timeTo ?? null,
+            params.skipPlace ?? 0,
+            params.placeLat ?? null,
+            params.placeLng ?? null,
+            params.radius ?? null,
+        ];
+
+        const [ oneshots ] = await global.db.execute(query, queryParams);
+        
+        return oneshots;
     } catch (error) {
         console.error(error);
     }
