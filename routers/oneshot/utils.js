@@ -1,8 +1,15 @@
-module.exports.getList = async (validatedQuery, userUID = null) => {
-    try {
-        const { days, place, radius, system, time } = validatedQuery;
+const moment = require('moment');
+const { statuses } = require('./interactionController');
 
-        const query = `SELECT oneshots.*, master.nickname AS masterNickname, join_requests.status AS joinStatus, appointmentOn < UTC_TIMESTAMP() AS isPast
+module.exports.search = async (validatedQuery, userUID = null) => {
+    try {
+        const { days, placeLat, placeLng, radius, system, timeFrom, timeTo } = validatedQuery;
+
+        const query = `SELECT oneshots.*,
+        master.nickname AS masterNickname,
+        join_requests.status AS joinStatus,
+        appointmentOn < UTC_TIMESTAMP() AS isPast,
+        ST_Distance_Sphere(POINT(placeLat, placeLng), POINT(?, ?)) / 1000 AS distance
         FROM oneshots
         LEFT JOIN join_requests ON oneshots.UID = join_requests.oneshotUID AND join_requests.userUID = ?
         LEFT JOIN users master ON master.UID = oneshots.masterUID
@@ -19,21 +26,23 @@ module.exports.getList = async (validatedQuery, userUID = null) => {
         } else {
             params.skipDays = 1;
         }
-        if (time) {
-            params.timeFrom = time.from;
-            params.timeTo = time.to;
+        if (timeFrom && timeTo) {
+            params.timeFrom = timeFrom;
+            params.timeTo = timeTo;
         } else {
             params.skipTime = 1;
         }
-        if (place) {
-            params.placeLat = place.lat;
-            params.placeLng = place.lng;
+        if (placeLat && placeLng && radius) {
+            params.placeLat = placeLat;
+            params.placeLng = placeLng;
             params.radius = radius;
         } else {
             params.skipPlace = 1;
         }
 
         const queryParams = [
+            params.placeLat ?? null,
+            params.placeLng ?? null,
             userUID ?? null,
             params.skipDays ?? 0,
             params.days ?? null,
@@ -47,6 +56,13 @@ module.exports.getList = async (validatedQuery, userUID = null) => {
         ];
 
         const [ oneshots ] = await global.db.execute(query, queryParams);
+
+        if (userUID) {
+            // populate isMaster with a boolean value
+            for (let i in oneshots) {
+                oneshots[i].isMaster = oneshots[i].masterUID === userUID;
+            }
+        }
         
         return oneshots;
     } catch (error) {
@@ -55,7 +71,7 @@ module.exports.getList = async (validatedQuery, userUID = null) => {
 }
 
 module.exports.validateQuery = (queryToValidate) => {
-    const { days, place, radius, system, time } = queryToValidate;
+    const { days, placeLat, placeLng, radius, system, timeFrom, timeTo } = queryToValidate;
     if (days && (!Array.isArray(days) || days.length === 0)) {
         return false;
     }
@@ -66,28 +82,44 @@ module.exports.validateQuery = (queryToValidate) => {
         }
         queryToValidate.days[i] = day;
     }
-    if (place && (!place.lat || !place.lng || !radius || isNaN(radius) || radius < 0)) {
+    // query is not valid when either placeLat placeLng or radius are defined but not all of them
+    if ((placeLat || placeLng || radius) && !(placeLat && placeLng && radius)) {
         return false;
-    }
-    if (radius && (isNaN(radius) || radius < 0 || !place || !place.lat || !place.lng)) {
-        return false;
-    }
-    if (place) {
-        place.lat = parseFloat(place.lat);
-        place.lng = parseFloat(place.lng);
-        if (place.lat < -90 || place.lat > 90 || place.lng < -180 || place.lng > 180) {
+    } else if (placeLat && placeLng && radius) {
+        // also if they are defined all defined but any of them is not valid
+        if (isNaN(placeLat) || isNaN(placeLng) || isNaN(radius)) {
             return false;
         }
-        if (radius < 0) {
-            queryToValidate.radius = -radius;
+        if (placeLat < -90 || placeLat > 90 || placeLng < -180 || placeLng > 180 || radius < 0) {
+            return false;
         }
     }
     if (system && !Array.isArray(system)) {
         return false;
     }
-    if (time && (!time.from || !time.to || !moment(time.from, 'HH:mm', true).isValid() || !moment(time.to, 'HH:mm', true).isValid())) {
+    // query is not valid when either timeFrom or timeTo are defined but not both of them
+    if ((timeFrom || timeTo) && !(timeFrom && timeTo)) {
         return false;
+    } else if (timeFrom && timeTo) {
+        // also if they are defined all defined but any of them is not valid (momentjs)
+        if (!moment(timeFrom, 'HH:mm', true).isValid() || !moment(timeTo, 'HH:mm', true).isValid()) {
+            return false;
+        }
     }
 
     return queryToValidate;
+}
+
+module.exports.listOneshots = async (userUID) => {
+    const [ oneshots ] = await global.db.execute(`SELECT o.*, status
+    FROM oneshots o
+    LEFT JOIN join_requests jr
+    ON o.UID = jr.oneshotUID
+    WHERE ? IN (o.masterUID, jr.userUID)`, [ userUID ]);
+    return oneshots.map(oneshot => {
+        oneshot.isMaster = oneshot.masterUID === userUID;
+        oneshot.isIn = oneshot.status === statuses.ACCEPTED;
+        oneshot.isPending = oneshot.status === statuses.PENDING;
+        return oneshot;
+    });
 }

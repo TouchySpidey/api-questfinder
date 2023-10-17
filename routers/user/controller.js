@@ -2,32 +2,77 @@ const express = require('express');
 const router = express.Router();
 
 const messages = require.main.require('./routers/messages/utils');
+const { listOneshots } = require.main.require('./routers/oneshot/utils');
 
-router.get('/info', (req, res) => {
-    const { user } = req;
-    res.status(200).json({
-        new: user.new ?? false,
-        nickname: user.nickname,
-    });
+router.get('/startup', (req, res) => {
+    try {
+        const { user } = req;
+        res.status(200).json({
+            new: user.new ?? false,
+            nickname: user.nickname,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
+});
+
+router.get('/profile', async (req, res) => {
+    try {
+        const { user } = req;
+        const [ usersRow ] = await global.db.execute(`SELECT nickname, bio, email, updatedOn
+        FROM users
+        WHERE UID = ?`, [ user.UID ]);
+        if (usersRow.length === 0) {
+            return res.status(404).send('User Not Found');
+        }
+        const userDb = usersRow[0];
+        const [ akas ] = await global.db.execute(`SELECT nickname, since, until
+        FROM akas
+        WHERE userUID = ?`, [ user.UID ]);
+        return res.status(200).json({
+            nickname: userDb.nickname,
+            bio: userDb.bio,
+            signedUpOn: userDb.signedUpOn,
+            email: userDb.email,
+            akas: akas,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
 });
 
 router.get('/view/:UID', async (req, res) => {
-    const { user } = req;
-    const { UID } = req.params;
-    const [userRows] = await global.db.execute('SELECT * FROM users WHERE UID = ?', [UID]);
-    if (!userRows.length) {
-        return res.status(404).send('User Not Found');
+    try {
+        const { UID } = req.params;
+        const [usersRow] = await global.db.execute(`SELECT UID, nickname, bio, signedUpOn
+        FROM users
+        WHERE UID = ?`, [ UID ]);
+        if (usersRow.length === 0) {
+            return res.status(404).send('User Not Found');
+        }
+        const user = usersRow[0];
+        const [ akas ] = await global.db.execute(`SELECT nickname, since, until
+        FROM akas
+        WHERE userUID = ?`, [ UID ]);
+        const oneshots = await listOneshots(UID);
+        const myOneshots = await listOneshots(req.user.UID);
+        return res.status(200).json({
+            UID: user.UID,
+            nickname: user.nickname,
+            bio: user.bio,
+            signedUpOn: user.signedUpOn,
+            akas: akas,
+            oneshots: oneshots.map(oneshot => {
+                oneshot.isCommon = myOneshots.some(myOneshot => myOneshot.UID === oneshot.UID);
+                return oneshot;
+            }),
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Internal Server Error");
     }
-    const userRow = userRows[0];
-    // const [oneshotsTogetherRow] = await global.db.execute(
-    const oneshotsTogetherRow = [];
-    const [oneshotsRow] = await global.db.execute('SELECT * FROM oneshots WHERE masterUID = ?', [UID]);
-    res.status(200).json({
-        nickname: userRow.nickname,
-        bio: userRow.bio,
-        signedUpOn: userRow.signedUpOn,
-        oneshots: oneshotsRow
-    });
 });
 
 router.post('/update', async (req, res) => {

@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { validateQuery, getList } = require.main.require('./routers/oneshot/utils');
+const { validateQuery, search } = require.main.require('./routers/oneshot/utils');
 
-router.get('/oneshot/list', async (req, res) => {
+router.get('/oneshot/search', async (req, res) => {
     try {
         const validatedQuery = validateQuery(req.query);
         if (!validatedQuery) {
             return res.status(400).send("Invalid query");
         }
     
-        const list = await getList(validatedQuery);
+        const list = await search(validatedQuery);
     
         res.status(200).send({ list });
     } catch (error) {
@@ -21,15 +21,22 @@ router.get('/oneshot/list', async (req, res) => {
 router.get('/user/:UID', async (req, res) => {
     try {
         const { UID } = req.params;
-        const [usersRow] = await global.db.execute('SELECT * FROM users WHERE UID = ?', [UID]);
+        const [usersRow] = await global.db.execute(`SELECT UID, nickname, bio, signedUpOn
+        FROM users
+        WHERE UID = ?`, [ UID ]);
         if (usersRow.length === 0) {
             return res.status(404).send('User Not Found');
         }
         const user = usersRow[0];
+        const [ akas ] = await global.db.execute(`SELECT nickname, since, until
+        FROM akas
+        WHERE userUID = ?`, [ UID ]);
         return res.status(200).json({
             UID: user.UID,
             nickname: user.nickname,
             bio: user.bio,
+            signedUpOn: user.signedUpOn,
+            akas: akas
         });
     } catch (error) {
         console.error(error);

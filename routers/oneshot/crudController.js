@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const { validateQuery, getList } = require('./utils');
+const { validateQuery, search } = require('./utils');
 const { messageToDB: sendMessage, listMessages } = require.main.require('./routers/messages/utils');
 const { statuses } = require('./interactionController');
 
@@ -134,14 +134,14 @@ module.exports.edit = async (req, res) => {
     }
 }
 
-module.exports.list = async (req, res) => {
+module.exports.search = async (req, res) => {
     const { user } = req;
     const validatedQuery = validateQuery(req.query);
     if (!validatedQuery) {
         return res.status(400).send("Invalid query");
     }
 
-    const list = await getList(validatedQuery, user.UID);
+    const list = await search(validatedQuery, user.UID);
 
     res.status(200).send({ list });
 }

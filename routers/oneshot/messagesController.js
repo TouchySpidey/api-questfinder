@@ -40,7 +40,7 @@ module.exports.listMessages = async (req, res) => {
         if (oneshot.masterUID !== user.UID && joinRequestRows.length === 0) {
             return res.status(403).send("Permission denied");
         }
-        const messagesList = await listMessages('ONESHOT', oneshotUID);
+        const messagesList = await listMessages('ONESHOT', oneshotUID, user.UID);
         res.status(200).json(messagesList);
     } catch (error) {
         console.error(error);
