@@ -8,6 +8,7 @@ module.exports = async (app) => {
         global.db = pool.promise();
         console.log('Database connection established');
     } catch (error) {
+        console.error('Database connection failed');
         process.exit(1);
     }
 }
