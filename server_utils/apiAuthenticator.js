@@ -2,21 +2,21 @@ const token_verifier = require('./tokenVerifier');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).send('Unauthorized');
-    }
-
-    const idToken = authHeader.split('Bearer ')[1];
-    const decodedToken = await token_verifier(idToken);
-    
-    if (!decodedToken) {
-        return res.status(401).send('Unauthorized');
-    }
-    
-    const { firebaseUID, email } = decodedToken;
-    
     try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        const idToken = authHeader.split('Bearer ')[1];
+        const decodedToken = await token_verifier(idToken);
+        
+        if (!decodedToken) {
+            return res.status(401).send('Unauthorized');
+        }
+        
+        const { firebaseUID, email } = decodedToken;
+    
         const [rows] = await global.db.execute('SELECT * FROM users WHERE firebaseUid = ?', [firebaseUID]);
         
         let user;
