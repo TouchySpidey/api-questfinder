@@ -53,6 +53,7 @@ async function interact(toStatus, req, res) {
         if (joinRequestRows.length === 0) {
             if (toStatus == statuses.PENDING) {
                 await global.db.execute(`INSERT INTO join_requests (oneshotUID, userUID, status, updatedOn) VALUES (?, ?, ?, UTC_TIMESTAMP())`, [ oneshotUID, userUID, toStatus ]);
+                global.sendSocketMessage(oneshot.masterUID, 'join-request', { oneshotUID, userUID, nickname: user.nickname });
                 return res.status(200).send("Request Created");
             } else {
                 return res.status(404).send("Request not found");
