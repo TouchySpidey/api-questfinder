@@ -37,10 +37,10 @@ module.exports = (socketIo) => {
             const killingCheck = setInterval(() => {
                 // ogni 5 minuti richiedi al client di mandare un messaggio
                 // se non arriva entro 30 secondi, disconnetti il client
-                actualKiller = setTimeout(_ => killSocket(killingCheck, userUID, socketUID, socket), 1000 * 3);
+                actualKiller = setTimeout(_ => killSocket(killingCheck, userUID, socketUID, socket), 1000 * 5);
                 socket.emit('keepalive');
                 console.log('keepalive request sent')
-            }, 1000 * 1 * 8);
+            }, 1000 * 60 * 5);
             
             socket.on('keepalive', async (accessToken) => {
                 console.log('keepalive response received');

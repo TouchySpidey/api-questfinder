@@ -121,7 +121,7 @@ router.post('/message/:userUID', (req, res) => {
         const receiverType = 'USER';
         const receiverUID = req.params.userUID;
         const { message } = req.body;
-        messages.messageToDB(user.UID, receiverType, receiverUID, message);
+        messages.messageToDB(user, receiverType, receiverUID, message);
         res.status(200).send('Message sent');
     } catch (error) {
         console.error(error);

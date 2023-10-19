@@ -16,7 +16,7 @@ module.exports.send = async (req, res) => {
         if (oneshot.masterUID !== user.UID && joinRequestRows.length === 0) {
             return res.status(403).send("Permission denied");
         }
-        messageToDB(user.UID, 'ONESHOT', oneshotUID, message);
+        messageToDB(user, 'ONESHOT', oneshotUID, message);
         res.status(200).send('Message sent');
         // todo fcm trigger
         // todo ws trigger
