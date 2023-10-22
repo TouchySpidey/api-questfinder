@@ -1,7 +1,17 @@
 const { statuses } = require.main.require('./constants');
+const { v4: uuidv4 } = require('uuid');
 
-module.exports.messageToDB = (senderUID, receiverType, receiverUID, message) => {
-    global.db.execute('INSERT INTO messages (UID, senderUID, receiverType, receiverUID, content, sentOn) VALUES (uuid(), ?, ?, ?, ?, UTC_TIMESTAMP())', [senderUID, receiverType, receiverUID, message]);
+module.exports.messageToDB = (sender, receiverType, receiverUID, message) => {
+    const UID = uuidv4();
+    global.db.execute('INSERT INTO messages (UID, senderUID, receiverType, receiverUID, content, sentOn) VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())', [UID, sender.UID ?? null, receiverType, receiverUID, message]);
+    global.sendSocketMessage(receiverUID, 'message', { // alerting the receiver's socket with info regarding what chat to open to view this message
+        messageUID: UID,
+        chatType: receiverType,
+        chatID: sender.UID, // the chat to open is the one with the sender
+        senderUID: sender.UID ?? null, // could be a system message
+        nickname: sender.nickname,
+        content: message
+    });
 }
 
 module.exports.listMessages = async (chatType, interlocutorUID, userUID) => {
