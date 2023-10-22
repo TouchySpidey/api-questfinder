@@ -23,7 +23,10 @@ require('./server_utils/webSockets')(socketIo);
 
 // firebase
 global.firebase = require('firebase-admin');
-global.firebase.initializeApp();
+const serviceAccountPath = process.env.QUESTFINDER_SERVICE_ACCOUNT;
+global.firebase.initializeApp({
+    credential: global.firebase.credential.cert(serviceAccountPath),
+});
 
 // google services
 require('./server_utils/googleServices');
