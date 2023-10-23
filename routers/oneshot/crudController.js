@@ -40,7 +40,7 @@ module.exports.view = async (req, res) => {
     try {
         const { user } = req;
         const oneshotUID = req.params.UID;
-        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ? AND isDeleted = 0', [oneshotUID]);
+        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ?', [oneshotUID]);
         if (oneshotRow.length === 0) {
             return res.status(404).send("Oneshot not found");
         }
@@ -78,11 +78,14 @@ module.exports.delete = async (req, res) => {
     try {
         const oneshotUID = req.params.UID;  // Assuming the UID is passed as a URL parameter
         const { user } = req;
-        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ? AND isDeleted = 0', [oneshotUID]);
+        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ?', [oneshotUID]);
         if (oneshotRow.length === 0) {
             return res.status(404).send("Oneshot not found");
         }
         const oneshot = oneshotRow[0];
+        if (oneshot.isDeleted) {
+            return res.status(200).send("Oneshot already deleted");
+        }
         if (oneshot.masterUID !== user.UID) {
             return res.status(403).send("Permission denied");
         }
