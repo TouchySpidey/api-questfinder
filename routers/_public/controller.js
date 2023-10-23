@@ -18,6 +18,31 @@ router.get('/oneshot/search', async (req, res) => {
     }
 });
 
+router.get('/oneshot/:UID', async (req, res) => {
+    try {
+        const oneshotUID = req.params.UID;
+        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ?', [oneshotUID]);
+        if (oneshotRow.length === 0) {
+            return res.status(404).send("Oneshot not found");
+        }
+        const oneshot = oneshotRow[0];
+        const [ masterRow ] = await global.db.execute('SELECT UID, nickname, bio, signedUpOn FROM users WHERE UID = ?', [oneshot.masterUID]);
+        if (masterRow.length === 0) {
+            return res.status(404).send("Master not found");
+        }
+        const master = masterRow[0];
+        let output = {
+            oneshot,
+            master
+        };
+
+        res.status(200).json( output );
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
 router.get('/user/:UID', async (req, res) => {
     try {
         const { UID } = req.params;
