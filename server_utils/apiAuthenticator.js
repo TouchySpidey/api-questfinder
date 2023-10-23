@@ -19,7 +19,7 @@ module.exports = async (req, res, next) => {
     
         const [rows] = await global.db.execute('SELECT * FROM users WHERE firebaseUid = ?', [firebaseUID]);
         
-        let user;
+        let user = {};
         if (rows.length > 0) {
             user = rows[0];
         } else {
