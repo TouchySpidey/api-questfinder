@@ -22,7 +22,7 @@ module.exports.search = async (validatedQuery, userUID = null) => {
         let params = { };
         
         if (days) {
-            params.days = days.join(',');
+            params.days = days;
         } else {
             params.skipDays = 1;
         }
@@ -33,9 +33,9 @@ module.exports.search = async (validatedQuery, userUID = null) => {
             params.skipTime = 1;
         }
         if (placeLat && placeLng && radius) {
-            params.placeLat = placeLat;
-            params.placeLng = placeLng;
-            params.radius = radius;
+            params.placeLat = parseFloat(placeLat);
+            params.placeLng = parseFloat(placeLng);
+            params.radius = parseFloat(radius);
         } else {
             params.skipPlace = 1;
         }
@@ -55,7 +55,9 @@ module.exports.search = async (validatedQuery, userUID = null) => {
             params.radius ?? null,
         ];
 
-        const [ oneshots ] = await global.db.execute(query, queryParams);
+        const completeQuery = global.mysql.format(query, queryParams);
+
+        const [ oneshots ] = await global.db.query(completeQuery);
 
         if (userUID) {
             // populate isMaster with a boolean value

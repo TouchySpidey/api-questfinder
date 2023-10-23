@@ -1,4 +1,5 @@
 const mysql = require('mysql2');
+global.mysql = mysql;
 
 module.exports = async (app) => {
     try {
