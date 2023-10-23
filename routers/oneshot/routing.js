@@ -24,6 +24,5 @@ router.get('/kick/:oneshotUID/:userUID', interaction.kick);
 
 // messages
 router.post('/message/:oneshotUID', messages.send);
-router.get('/messages/:oneshotUID', messages.listMessages);
 
 module.exports = router;
