@@ -24,6 +24,7 @@
         <div id="sidebar" class="w-1/4 bg-gray-300 p-4">
             <button id="copyToken" class="w-full p-2 bg-green-500 text-white mb-2">Copy Token</button>
             <button id="startSocket" class="w-full p-2 bg-green-500 text-white mb-2">Start Socket</button>
+            <button id="makeToken" class="w-full p-2 bg-green-500 text-white mb-2">Make Token</button>
             <button id="version" class="w-full p-2 bg-blue-500 text-white mb-2">/version</button>
             <button id="viewOneshot" class="w-full p-2 bg-blue-500 text-white mb-2">/api/oneshot/view</button>
             <button id="postOneshot" class="w-full p-2 bg-blue-500 text-white mb-2">/api/oneshot/post</button>
@@ -46,7 +47,26 @@
         class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"> validateaddress </button>
 
     <script>
+        let messaging;
         let basicurl = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+        $('#makeToken').click(_ => {
+            _USER.getIdToken()
+            .then(accessToken => {
+                try {
+                    console.log(firebase);
+                    
+                    messaging = firebase.messaging();
+                    
+                    messaging.onMessage((payload) => {
+                        console.log('Message received. ', payload);
+                        // ...handle/show the notification or any other task
+                    });
+
+                } catch (error) {
+                    console.log(error);
+                }
+            });
+        })
         $('#copyToken').click(_ => {
             _USER.getIdToken()
             .then(accessToken => {
@@ -64,15 +84,13 @@
                     console.log('Connected');
                 });
 
-                socket.on('keepalive', () => {
-                    console.log('Keepalive request received');
-                    _USER.getIdToken().then(newToken => {
-                        socket.emit('keepalive', newToken);
-                    });
-                });
-
                 socket.on('join-request', (data) => {
                     console.log('Join request received');
+                    console.log(data);
+                });
+
+                socket.on('message', (data) => {
+                    console.log('message received');
                     console.log(data);
                 });
             });
@@ -124,7 +142,7 @@
         
         $('#getNickname').click(_ => {
             _USER.getIdToken()
-            .then(accessToken => fetch(basicurl + "/api/user/get-nickname", {
+            .then(accessToken => fetch(basicurl + "/api/user/startup", {
                 method: 'GET',    
                 headers: {
                     'Authorization': 'Bearer ' + accessToken,
@@ -234,12 +252,13 @@
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyAIjVikqQjo1G75nOVkf9Mz-CxeXcPnRDw",
-            authDomain: "oneshot-79f76.firebaseapp.com",
-            projectId: "oneshot-79f76",
-            storageBucket: "oneshot-79f76.appspot.com",
-            messagingSenderId: "975858570575",
-            appId: "1:975858570575:web:c3fb16e6bf801e9a6c213a"
+            apiKey: "AIzaSyCoy5EAXOnBuK4u1DXCSF1JQ-02qvxC_Lk",
+            authDomain: "questfinder-dd466.firebaseapp.com",
+            projectId: "questfinder-dd466",
+            storageBucket: "questfinder-dd466.appspot.com",
+            messagingSenderId: "429219253172",
+            appId: "1:429219253172:web:1f4bc0ef954263b36900e1",
+            measurementId: "G-PV4ZQTB0SC"
         };
         var uiConfig = {
             signInSuccessUrl: basicurl + '/test.html',
@@ -315,10 +334,19 @@
                 }
             });
         }
-    </script>
-</body>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                .then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(function(error) {
+                    console.log('Service Worker registration failed:', error);
+                });
+            });
+        }
 
-</html>
+    </script>
 </body>
 
 </html>
