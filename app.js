@@ -23,9 +23,9 @@ require('./server_utils/webSockets')(socketIo);
 
 // firebase
 global.firebase = require('firebase-admin');
-const serviceAccountPath = process.env.QUESTFINDER_SERVICE_ACCOUNT;
+const serviceAccount = require(process.env.QUESTFINDER_SERVICE_ACCOUNT);
 global.firebase.initializeApp({
-    credential: global.firebase.credential.cert(serviceAccountPath),
+    credential: global.firebase.credential.cert(serviceAccount),
 });
 
 // google services
@@ -37,6 +37,11 @@ require('./server_utils/database')(app);
 app.get('/', (req, res) => {
     // test.html
     res.sendFile(__dirname + '/test.html');
+});
+
+app.get('/firebase-messaging-sw.js', (req, res) => {
+    // firebase-messaging-sw.js
+    res.sendFile(__dirname + '/firebase-messaging-sw.js');
 });
 
 // handle routes
