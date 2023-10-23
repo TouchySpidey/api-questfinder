@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const { validateQuery, search } = require('./utils');
 const { messageToDB: sendMessage, listMessages } = require.main.require('./routers/messages/utils');
-const { statuses } = require('./interactionController');
+const { statuses } = require.main.require('./constants');
 
 module.exports.post = async (req, res) => {
     try {

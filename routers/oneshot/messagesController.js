@@ -1,5 +1,5 @@
 const { messageToDB, listMessages } = require.main.require('./routers/messages/utils');
-const { statuses } = require('./interactionController');
+const { statuses } = require.main.require('./constants');
 
 module.exports.send = async (req, res) => {
     try {

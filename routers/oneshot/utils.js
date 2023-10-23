@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { statuses } = require('./interactionController');
+const { statuses } = require.main.require('./constants');
 
 module.exports.search = async (validatedQuery, userUID = null) => {
     try {
