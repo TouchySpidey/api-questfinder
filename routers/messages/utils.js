@@ -1,17 +1,44 @@
 const { statuses } = require.main.require('./constants');
+const { getUsersInOneshot } = require.main.require('./routers/oneshot/utils');
 const { v4: uuidv4 } = require('uuid');
 
-module.exports.messageToDB = (sender, receiverType, receiverUID, message) => {
+module.exports.messageToDB = async (sender, receiverType, receiverUID, message) => {
     const UID = uuidv4();
     global.db.execute('INSERT INTO messages (UID, senderUID, receiverType, receiverUID, content, sentOn) VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())', [UID, sender.UID ?? null, receiverType, receiverUID, message]);
-    global.sendSocketMessage(receiverUID, 'message', { // alerting the receiver's socket with info regarding what chat to open to view this message
-        messageUID: UID,
-        chatType: receiverType,
-        chatID: sender.UID, // the chat to open is the one with the sender
-        senderUID: sender.UID ?? null, // could be a system message
-        nickname: sender.nickname,
-        content: message
-    });
+    if (receiverType === 'USER') {
+        // send socket message to both sender and receiver
+        const messageBodyForSocket = {
+            messageUID: UID,
+            chatType: receiverType,
+            senderUID: sender.UID ?? null, // could be a system message
+            nickname: sender.nickname,
+            content: message
+        };
+        global.sendSocketMessage(receiverUID, 'message', {
+            ...messageBodyForSocket,
+            chatId: sender.UID
+        });
+        global.sendSocketMessage(sender.UID, 'message', {
+            ...messageBodyForSocket,
+            chatId: receiverUID
+        });
+    } else if (receiverType === 'ONESHOT') {
+        // send socket message to all users in the oneshot
+        const messageBodyForSocket = {
+            messageUID: UID,
+            chatType: receiverType,
+            chatId: receiverUID,
+            senderUID: sender.UID,
+            nickname: sender.nickname,
+            content: message
+        };
+        const usersInOneshot = await getUsersInOneshot(receiverUID);
+        usersInOneshot.forEach(user => {
+            if (user.isIn) {
+                global.sendSocketMessage(user.UID, 'message', messageBodyForSocket);
+            }
+        });
+    }
 }
 
 module.exports.listMessages = async (chatType, interlocutorUID, userUID) => {

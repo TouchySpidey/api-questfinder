@@ -123,3 +123,30 @@ module.exports.listOneshots = async (userUID) => {
         return oneshot;
     });
 }
+
+module.exports.getUsersInOneshot = async (oneshotUID) => {
+    const [ oneshotRows ] = await global.db.execute(`SELECT masterUID FROM oneshots WHERE UID = ?`, [ oneshotUID ]);
+    if (oneshotRows.length === 0) {
+        return [];
+    }
+    const oneshot = oneshotRows[0];
+    const [ masterRows ] = await global.db.execute(`SELECT UID, nickname, bio, signedUpOn FROM users WHERE UID = ?`, [ oneshot.masterUID ]);
+    if (masterRows.length === 0) {
+        return [];
+    }
+    const master = masterRows[0];
+    master.isMaster = true;
+    master.isIn = true;
+    master.isPending = false;
+    const [ usersRows ] = await global.db.execute(`SELECT users.UID, users.nickname, users.bio, users.signedUpOn, join_requests.status
+    FROM join_requests
+    LEFT JOIN users ON join_requests.userUID = users.UID
+    WHERE join_requests.oneshotUID = ?`, [ oneshotUID ]);
+    const users = usersRows.map(user => {
+        user.isMaster = user.UID === oneshot.masterUID;
+        user.isIn = user.status === statuses.ACCEPTED || user.isMaster;
+        user.isPending = user.status === statuses.PENDING;
+        return user;
+    });
+    return users.concat(master);
+}
