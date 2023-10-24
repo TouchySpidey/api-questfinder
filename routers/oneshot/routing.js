@@ -11,6 +11,7 @@ router.get('/view/:UID', crud.view);
 router.delete('/delete/:UID', crud.delete);
 router.post('/edit/:UID', crud.edit);
 router.get('/search', crud.search);
+router.get('/list', crud.list);
 
 // user interactions
 router.get('/join/:oneshotUID', interaction.join);

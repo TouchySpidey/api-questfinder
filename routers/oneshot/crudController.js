@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const { validateQuery, search } = require('./utils');
+const { validateQuery, search, listOneshots } = require('./utils');
 const { messageToDB: sendMessage, listMessages } = require.main.require('./routers/messages/utils');
 const { statuses } = require.main.require('./constants');
 
@@ -68,6 +68,17 @@ module.exports.view = async (req, res) => {
         output.messages = await listMessages('ONESHOT', oneshotUID, user.UID);
 
         res.status(200).json( output );
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Internal Server Error");
+    }
+}
+
+module.exports.list = async (req, res) => {
+    try {
+        const { user } = req;
+        const list = await listOneshots(user.UID);
+        res.status(200).json({ list });
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
