@@ -132,4 +132,6 @@ dist
 
 # netsons.com stuff
 .well-known
+cgi-bin
+tmp
 .htaccess
