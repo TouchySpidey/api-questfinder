@@ -1,4 +1,4 @@
-const token_verifier = require('./tokenVerifier');
+const tokenVerifier = require('./tokenVerifier');
 const { v4: uuidv4 } = require('uuid');
 
 global.userSockets = {};
@@ -6,7 +6,7 @@ global.userSockets = {};
 module.exports = (socketIo) => {
     try {
         socketIo.on('connection', async (socket) => {
-            const userData = await token_verifier(socket.handshake.query.token);
+            const userData = await tokenVerifier(socket.handshake.query.token);
             const { firebaseUID } = userData;
             const userUID = firebaseUID ? await getUserUIDFromFirebaseUID(firebaseUID) : null;
             const socketUID = userUID ? uuidv4() : null;

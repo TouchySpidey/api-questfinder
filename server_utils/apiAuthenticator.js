@@ -1,4 +1,4 @@
-const token_verifier = require('./tokenVerifier');
+const tokenVerifier = require('./tokenVerifier');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async (req, res, next) => {
@@ -9,7 +9,7 @@ module.exports = async (req, res, next) => {
         }
 
         const idToken = authHeader.split('Bearer ')[1];
-        const decodedToken = await token_verifier(idToken);
+        const decodedToken = await tokenVerifier(idToken);
         
         if (!decodedToken) {
             return res.status(401).send('Unauthorized');

@@ -14,7 +14,7 @@ const socketIo = initSocketIo(server, {
     }
 });
 
-const port = global.APP_ENVIRONMENT == 'dev' ? 8080 : null;
+const port = global.APP_ENVIRONMENT == 'production' ? null : 8080;
 app.use(cors());
 app.use(express.json());
 
