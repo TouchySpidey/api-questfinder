@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const messages = require.main.require('./routers/messages/utils');
-const { listOneshots } = require.main.require('./routers/oneshot/utils');
+const messages = require('../messages/utils');
+const { listOneshots } = require('../oneshot/utils');
 
 router.get('/startup', (req, res) => {
     try {

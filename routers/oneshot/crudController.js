@@ -1,8 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const { validateQuery, search, listOneshots } = require('./utils');
-const { messageToDB: sendMessage, listMessages } = require.main.require('./routers/messages/utils');
-const { statuses } = require.main.require('./constants');
+const { messageToDB: sendMessage, listMessages } = require('../messages/utils');
+const { statuses } = require('../../constants');
 
 module.exports.post = async (req, res) => {
     try {
@@ -162,11 +162,11 @@ module.exports.search = async (req, res) => {
 
 function validateInput(res, inputToValidate) {
     const { date, time, placeLat, placeLng, placeDescription, title, playersMax, playersOut, gameLevel, description } = inputToValidate;
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    if (!date || !moment(date, 'YYYY-MM-DD', true).isValid()) {
         res.status(400).send("Invalid date format");
         return false;
     }
-    if (!time || !/^\d{2}:\d{2}$/.test(time)) {
+    if (!time || !moment(time, 'HH:mm', true).isValid()) {
         res.status(400).send("Invalid time format");
         return false;
     }

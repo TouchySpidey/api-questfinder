@@ -1,6 +1,6 @@
-const { statuses } = require.main.require('./constants');
+const { statuses } = require('../../constants');
 
-const { messageToDB: sendMessage } = require.main.require('./routers/messages/utils');
+const { messageToDB: sendMessage } = require('../messages/utils');
 
 module.exports.statuses = statuses;
 

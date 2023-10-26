@@ -143,7 +143,7 @@
         $('#getNickname').click(_ => {
             _USER.getIdToken()
             .then(accessToken => fetch(basicurl + "/api/user/startup", {
-                method: 'GET',    
+                method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + accessToken,
                     'Content-Type': 'application/json',
@@ -261,7 +261,7 @@
             measurementId: "G-PV4ZQTB0SC"
         };
         var uiConfig = {
-            signInSuccessUrl: basicurl + '/test.html',
+            signInSuccessUrl: basicurl,
             signInOptions: [
                 // Leave the lines as is for the providers you want to offer your users.
                 firebase.auth.GoogleAuthProvider.PROVIDER_ID,

@@ -1,4 +1,4 @@
-const authenticate = require.main.require('./server_utils/apiAuthenticator');
+const authenticate = require('../server_utils/apiAuthenticator');
 
 module.exports = app => {
     app.use('/api/public', require('./_public/controller'));

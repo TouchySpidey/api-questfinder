@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { validateQuery, search } = require.main.require('./routers/oneshot/utils');
+const { validateQuery, search } = require('../oneshot/utils');
 
 router.get('/oneshot/search', async (req, res) => {
     try {
