@@ -11,6 +11,6 @@ global.googleMapsClient.geocode({address: 'Easter Island'})
     console.log('google api works fine');
 })
 .catch((err) => {
-    console.error(err.json);
+    console.error(err);
     throw err;
 });

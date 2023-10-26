@@ -14,7 +14,7 @@ const socketIo = initSocketIo(server, {
     }
 });
 
-const port = 8080;
+const port = global.APP_ENVIRONMENT == 'dev' ? 8080 : null;
 app.use(cors());
 app.use(express.json());
 
@@ -48,5 +48,5 @@ app.get('/firebase-messaging-sw.js', (req, res) => {
 require('./routers/routers')(app);
 
 server.listen(port, () => {
-    console.log(`App listening on port ${port}`);
+    console.log(`App listening on port ${server.address().port}`);
 });
