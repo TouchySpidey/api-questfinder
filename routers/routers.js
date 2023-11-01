@@ -7,6 +7,7 @@ module.exports = app => {
     app.use('/api/user', authenticate, require('./user/controller'));
     app.use('/api/oneshot', authenticate, require('./oneshot/routing'));
     app.use('/api/device', authenticate, require('./device/controller'));
+    app.use('/api/notificationPreferences', authenticate, require('./notificationPreferences/controller'));
 
     // 404
     app.use((req, res) => {
