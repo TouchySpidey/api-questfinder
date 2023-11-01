@@ -41,6 +41,18 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
     }
 }
 
+module.exports.chatView = (userUID, chatType, chatId) => {
+    global.db.execute('REPLACE INTO chat_views VALUES (?, ?, ?, UTC_TIMESTAMP())', [ userUID, chatType, chatId ]);
+}
+
+module.exports.lastViewForChat = async (userUID, chatType, chatId) => {
+    const [ rows ] = await global.db.execute('SELECT lastViewed FROM chat_views WHERE userUID = ? AND chatType = ? AND chatId = ?', [ userUID, chatType, chatId ]);
+    if (rows.length === 0) {
+        return '0000-00-00T00:00:00.000Z';
+    }
+    return rows[0].lastViewed;
+}
+
 module.exports.listMessages = async (chatType, interlocutorUID, userUID) => {
     let messagesRows;
     if (chatType === 'USER') {

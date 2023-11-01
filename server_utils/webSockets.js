@@ -1,5 +1,6 @@
 const tokenVerifier = require('./tokenVerifier');
 const { v4: uuidv4 } = require('uuid');
+const { chatView } = require('../routers/messages/utils');
 
 global.userSockets = {};
 
@@ -12,14 +13,12 @@ module.exports = (socketIo) => {
             const socketUID = userUID ? uuidv4() : null;
 
             socket.on('disconnect', () => {
-                console.log('Client disconnected');
                 if (userUID in global.userSockets) {
                     if (socketUID in global.userSockets[userUID]) {
                         delete global.userSockets[userUID][socketUID];
                         if (Object.keys(global.userSockets[userUID]).length === 0) delete global.userSockets[userUID];
                     }
                 }
-                console.log(global.userSockets);
             })
             
             if (!userUID) {
@@ -30,7 +29,15 @@ module.exports = (socketIo) => {
                 global.userSockets[userUID] = {};
             }
             global.userSockets[userUID][socketUID] = socket;
-            console.log(global.userSockets);
+
+            socket.on('chat-view', async (body) => {
+                if (body && typeof body === 'object') {
+                    const { chatType, chatId } = body;
+                    if (chatType && chatId) {
+                        chatView(userUID, chatType, chatId);
+                    }
+                }
+            })
         });
     } catch (e) {
         console.log(e);
@@ -52,7 +59,6 @@ async function getUserUIDFromFirebaseUID(firebaseUID = null) {
     if (!firebaseUID) {
         return false;
     }
-    console.log(firebaseUID);
     const [rows] = await global.db.execute('SELECT * FROM users WHERE firebaseUid = ?', [firebaseUID]);
     if (rows.length === 0) {
         return false;

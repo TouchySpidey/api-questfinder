@@ -8,6 +8,7 @@ module.exports = async (app) => {
             user: process.env.QUESTFINDER_DB_USER,
             password: process.env.QUESTFINDER_DB_PSWD,
             database: process.env.QUESTFINDER_DB_NAME,
+            timezone: 'Z',
         };
         const pool = mysql.createPool(dbConfig);
         global._db = pool;

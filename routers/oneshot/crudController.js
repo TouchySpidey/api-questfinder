@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const { validateQuery, search, listOneshots } = require('./utils');
-const { messageToDB: sendMessage, listMessages } = require('../messages/utils');
+const { messageToDB: sendMessage, listMessages, lastViewForChat } = require('../messages/utils');
 const { statuses } = require('../../constants');
 
 module.exports.post = async (req, res) => {
@@ -66,6 +66,7 @@ module.exports.view = async (req, res) => {
             }
         }
         output.messages = await listMessages('ONESHOT', oneshotUID, user.UID);
+        output.messagesLastReading = await lastViewForChat(user.UID, 'ONESHOT', oneshotUID);
 
         res.status(200).json( output );
     } catch (error) {
