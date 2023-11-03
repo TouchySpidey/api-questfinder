@@ -135,3 +135,4 @@ dist
 cgi-bin
 tmp
 .htaccess
+logs
