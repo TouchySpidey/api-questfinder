@@ -13,6 +13,7 @@ module.exports = async (app) => {
         const pool = mysql.createPool(dbConfig);
         global._db = pool;
         global.db = pool.promise();
+        await global.db.execute('SELECT 1');
         console.log('Database connection established');
     } catch (error) {
         console.error('Database connection failed');
