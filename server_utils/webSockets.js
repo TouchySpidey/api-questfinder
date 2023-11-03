@@ -1,6 +1,6 @@
 const tokenVerifier = require('./tokenVerifier');
 const { v4: uuidv4 } = require('uuid');
-const { chatView } = require('../routers/messages/utils');
+const { chatView } = require('projectUtils');
 
 global.userSockets = {};
 

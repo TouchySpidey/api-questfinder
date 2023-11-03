@@ -1,8 +1,4 @@
-const { statuses } = require('../../constants');
-
-const { messageToDB: sendMessage } = require('../messages/utils');
-
-module.exports.statuses = statuses;
+const { statuses, messageToDB } = require('projectUtils');
 
 module.exports.join = (req, res) => { interact(statuses.PENDING, req, res); }
 
@@ -87,15 +83,15 @@ async function interact(toStatus, req, res) {
             await global.db.execute(`UPDATE join_requests SET status = ?, updatedOn = UTC_TIMESTAMP() WHERE userUID = ? AND oneshotUID = ?`, [ toStatus, userUID, oneshotUID ]);
             switch (toStatus) {
                 case statuses.ACCEPTED:
-                    sendMessage(null, 'ONESHOT', oneshotUID, `Benvenuto ${ targetUser.nickname }`);
+                    messageToDB(null, 'ONESHOT', oneshotUID, `Benvenuto ${ targetUser.nickname }`);
                     break;
                 
                 case statuses.KICKED:
-                    sendMessage(null, 'ONESHOT', oneshotUID, `${ targetUser.nickname } è stato cacciato`);
+                    messageToDB(null, 'ONESHOT', oneshotUID, `${ targetUser.nickname } è stato cacciato`);
                     break;
 
                 case statuses.LEFT:
-                    sendMessage(null, 'ONESHOT', oneshotUID, `${ targetUser.nickname } ha lasciato la chat`);
+                    messageToDB(null, 'ONESHOT', oneshotUID, `${ targetUser.nickname } ha lasciato la chat`);
                     break;
             }
             // todo fcm trigger

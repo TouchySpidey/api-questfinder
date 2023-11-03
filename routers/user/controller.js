@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const messages = require('../messages/utils');
-const { listOneshots } = require('../oneshot/utils');
+const { messageToDB, listChats, listMessages, listOneshots } = require('projectUtils');
 
 router.get('/startup', (req, res) => {
     try {
@@ -121,7 +120,7 @@ router.post('/message/:userUID', (req, res) => {
         const receiverType = 'USER';
         const receiverUID = req.params.userUID;
         const { message } = req.body;
-        messages.messageToDB(user, receiverType, receiverUID, message);
+        messageToDB(user, receiverType, receiverUID, message);
         res.status(200).send('Message sent');
     } catch (error) {
         console.error(error);
@@ -132,7 +131,7 @@ router.get('/messages/:userUID', async (req, res) => {
     try {
         const { user } = req;
         const receiverUID = req.params.userUID;
-        const messagesRows = await messages.listMessages('USER', receiverUID, user.UID);
+        const messagesRows = await listMessages('USER', receiverUID, user.UID);
         res.status(200).json(messagesRows);
     } catch (error) {
         console.error(error);
@@ -142,7 +141,7 @@ router.get('/messages/:userUID', async (req, res) => {
 router.get('/chats', async (req, res) => {
     try {
         const { user } = req;
-        const chats = await messages.listChats(user.UID);
+        const chats = await listChats(user.UID);
         res.status(200).json(chats);
     } catch (error) {
         console.error(error);

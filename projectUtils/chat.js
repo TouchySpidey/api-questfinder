@@ -1,6 +1,6 @@
-const { statuses } = require('../../constants');
-const { getUsersInOneshot } = require('../oneshot/utils');
 const { v4: uuidv4 } = require('uuid');
+const statuses = require('./statuses');
+const { getUsersInOneshot } = require('./oneshot');
 
 module.exports.messageToDB = async (sender, receiverType, receiverUID, message) => {
     const UID = uuidv4();

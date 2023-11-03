@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { statuses } = require('../../constants');
+const statuses = require('./statuses');
 
 module.exports.search = async (validatedQuery, userUID = null) => {
     try {

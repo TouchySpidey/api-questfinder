@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getPreferences, validatePreference } = require('./utils');
+const { getPreferences, validatePreference } = require('projectUtils');
 
 router.get('/list', async (req, res) => {
     try {
