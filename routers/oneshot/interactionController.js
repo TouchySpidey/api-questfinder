@@ -1,4 +1,4 @@
-const { statuses, messageToDB } = require('projectUtils');
+const { statuses, messageToDB } = global.projectUtils;
 
 module.exports.join = (req, res) => { interact(statuses.PENDING, req, res); }
 

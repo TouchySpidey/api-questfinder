@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const { statuses, validateQuery, search, listOneshots, messageToDB, listMessages, lastViewForChat } = require('projectUtils');
+const { statuses, validateQuery, search, listOneshots, messageToDB, listMessages, lastViewForChat } = global.projectUtils;
 
 module.exports.post = async (req, res) => {
     try {

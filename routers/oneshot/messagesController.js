@@ -1,4 +1,4 @@
-const { statuses, messageToDB } = require('projectUtils');
+const { statuses, messageToDB } = global.projectUtils;
 
 module.exports.send = async (req, res) => {
     try {
