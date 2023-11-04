@@ -52,5 +52,5 @@ app.get('/firebase-messaging-sw.js', (req, res) => {
 require('./routers/routers')(app);
 
 server.listen(port, () => {
-    console.log(`App listening on port ${server.address().port}`);
+    console.log(`App listening on port ${server.address().port}, time: ${new Date()}`);
 });
