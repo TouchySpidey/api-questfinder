@@ -6,7 +6,7 @@ module.exports.post = async (req, res) => {
     try {
         const validatedInput = validateInput(res, req.body);
         if (!validatedInput) {
-            return res.status(400).send("Invalid input");
+            return;
         }
         const { date, time, placeLat, placeLng, placeDescription, title, playersMax, playersOut, gameLevel, description } = validatedInput;
         
@@ -27,7 +27,7 @@ module.exports.post = async (req, res) => {
             [UID, user.UID, appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, playersMax, playersOut, gameLevel, description]
         );
         res.status(201).json({ UID });
-        messageToDB(null, 'ONESHOT', UID, 'Chat room aperta');
+        messageToDB({}, 'ONESHOT', UID, 'Chat room aperta');
     } catch (error) {
         console.error(error);
         return res.status(500).send("Internal Server Error");
@@ -101,7 +101,7 @@ module.exports.delete = async (req, res) => {
         }
         await global.db.execute('UPDATE oneshots SET isDeleted = 1 WHERE UID = ?', [oneshotUID]);
         res.status(200).send("Oneshot deleted successfully");
-        messageToDB(null, 'ONESHOT', oneshotUID, 'Chat room chiusa');
+        messageToDB({}, 'ONESHOT', oneshotUID, 'Chat room chiusa');
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
@@ -122,7 +122,7 @@ module.exports.edit = async (req, res) => {
         }
         const validatedInput = validateInput(res, req.body);
         if (!validatedInput) {
-            return res.status(400).send("Invalid input");
+            return;
         }
         const { date, time, placeLat, placeLng, placeDescription, title, playersMax, playersOut, gameLevel, description } = validatedInput;
 
@@ -140,7 +140,7 @@ module.exports.edit = async (req, res) => {
             [appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, playersMax, playersOut, gameLevel, description, oneshotUID]
         );
         res.status(200).send("Oneshot edited successfully");
-        messageToDB(null, 'ONESHOT', UID, 'I dettagli della oneshot sono stati modificati');
+        messageToDB({}, 'ONESHOT', UID, 'I dettagli della oneshot sono stati modificati');
     } catch (error) {
         console.error(error);
         return res.status(500).send("Internal Server Error");

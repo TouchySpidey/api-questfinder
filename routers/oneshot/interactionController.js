@@ -83,15 +83,15 @@ async function interact(toStatus, req, res) {
             await global.db.execute(`UPDATE join_requests SET status = ?, updatedOn = UTC_TIMESTAMP() WHERE userUID = ? AND oneshotUID = ?`, [ toStatus, userUID, oneshotUID ]);
             switch (toStatus) {
                 case statuses.ACCEPTED:
-                    messageToDB(null, 'ONESHOT', oneshotUID, `Benvenuto ${ targetUser.nickname }`);
+                    messageToDB({}, 'ONESHOT', oneshotUID, `Benvenuto ${ targetUser.nickname }`);
                     break;
                 
                 case statuses.KICKED:
-                    messageToDB(null, 'ONESHOT', oneshotUID, `${ targetUser.nickname } è stato cacciato`);
+                    messageToDB({}, 'ONESHOT', oneshotUID, `${ targetUser.nickname } è stato cacciato`);
                     break;
 
                 case statuses.LEFT:
-                    messageToDB(null, 'ONESHOT', oneshotUID, `${ targetUser.nickname } ha lasciato la chat`);
+                    messageToDB({}, 'ONESHOT', oneshotUID, `${ targetUser.nickname } ha lasciato la chat`);
                     break;
             }
             // todo fcm trigger

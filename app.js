@@ -11,12 +11,15 @@ const server = http.createServer(app);
 const socketIo = initSocketIo(server, {
     cors: {
         origin: "*", // Replace with your frontend URL
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST", "DELETE"],
     }
 });
 
 const port = global.APP_ENVIRONMENT == 'production' ? null : 8080;
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:8000',
+    credentials: true
+}));
 app.use(express.json());
 
 // handle websockets
