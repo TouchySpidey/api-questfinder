@@ -75,15 +75,16 @@ router.get('/view/:UID', async (req, res) => {
 });
 
 router.post('/update', async (req, res) => {
+    let connection;
     try {
+        connection = await global.db.getConnection();
         const validatedInput = validateInput(res, req.body);
         if (!validatedInput) return;
         const { user } = req;
 
-        const connection = await global.db.getConnection();
         await connection.beginTransaction();
 
-        const [userRow] = await connection.execute('SELECT * FROM users WHERE UID = ?', [user.UID]);
+        const [ userRow ] = await connection.execute('SELECT * FROM users WHERE UID = ?', [user.UID]);
         if (!userRow.length) {
             return res.status(404).send('User Not Found');
         }
@@ -91,7 +92,7 @@ router.post('/update', async (req, res) => {
         
         if (validatedInput.nickname) {
             await connection.execute('UPDATE users SET nickname = ?, updatedOn = UTC_TIMESTAMP() WHERE UID = ?', [ validatedInput.nickname, userDb.UID ]);
-            await connection.execute('INSERT akas (userUID, nickname, since, until) VALUES (?, ?, ?, UTC_TIMESTAMP())', [ userDb.UID, userDb.nickname, userDb.createdOn ]);
+            await connection.execute('INSERT akas (userUID, nickname, since, until) VALUES (?, ?, ?, UTC_TIMESTAMP())', [ userDb.UID, userDb.nickname, userDb.updatedOn ]);
         }
 
         if (validatedInput.bio) {
