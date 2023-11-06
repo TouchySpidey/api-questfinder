@@ -69,4 +69,14 @@ router.get('/user/:UID', async (req, res) => {
     }
 });
 
+router.get('/gameSystem/list', async (req, res) => {
+    try {
+        const [ list ] = await global.db.execute(`SELECT * FROM game_systems`);
+        return res.status(200).json({ list });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send('Internal Server Error');
+    }
+})
+
 module.exports = router;
