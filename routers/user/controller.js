@@ -131,8 +131,10 @@ router.get('/messages/:userUID', async (req, res) => {
     try {
         const { user } = req;
         const receiverUID = req.params.userUID;
-        const messagesRows = await listMessages('USER', receiverUID, user.UID);
-        res.status(200).json(messagesRows);
+        res.status(200).json({
+            messages: await listMessages('USER', receiverUID, user.UID),
+            messagesLastReading: await lastViewForChat(user.UID, 'USER', receiverUID),
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).send('Internal Server Error');
