@@ -8,7 +8,7 @@ module.exports.post = async (req, res) => {
         if (!validatedInput) {
             return;
         }
-        const { date, time, placeLat, placeLng, placeDescription, title, playersMax, playersOut, gameLevel, description } = validatedInput;
+        const { date, time, placeLat, placeLng, placeDescription, title, playersMax, playersOut, gameLevel, description, gameSystem } = validatedInput;
         
         const { user } = req;
         
@@ -22,9 +22,9 @@ module.exports.post = async (req, res) => {
         const placeProvince = addressComponents.find(component => component.types.includes('administrative_area_level_2')).long_name;
     
         const [rows] = await global.db.execute(`INSERT INTO oneshots
-            (UID, masterUID, appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, playersMax, playersOut, gameLevel, description, createdOn)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
-            [UID, user.UID, appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, playersMax, playersOut, gameLevel, description]
+            (UID, masterUID, appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, gameSystem, playersMax, playersOut, gameLevel, description, createdOn)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
+            [UID, user.UID, appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, gameSystem, playersMax, playersOut, gameLevel, description]
         );
         res.status(201).json({ UID });
         messageToDB({}, 'ONESHOT', UID, 'Chat room aperta');
