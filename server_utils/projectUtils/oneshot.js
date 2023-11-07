@@ -3,7 +3,7 @@ const statuses = require('./statuses');
 
 module.exports.search = async (validatedQuery, userUID = null) => {
     try {
-        const { days, placeLat, placeLng, radius, system, timeFrom, timeTo } = validatedQuery;
+        const { days, placeLat, placeLng, radius, systems, timeFrom, timeTo } = validatedQuery;
 
         const query = `SELECT oneshots.*,
         master.nickname AS masterNickname,
@@ -17,10 +17,16 @@ module.exports.search = async (validatedQuery, userUID = null) => {
         AND (? = 1 OR WEEKDAY(appointmentOn) + 1 IN (?))
         AND (? = 1 OR TIME(appointmentOn) BETWEEN ? AND ?)
         AND (? = 1 OR ST_Distance_Sphere(POINT(placeLat, placeLng), POINT(?, ?)) / 1000 <= ?)
+        AND (? = 1 OR gameSystem IN (?))
         ORDER BY appointmentOn ASC`;
 
         let params = { };
         
+        if (systems) {
+            params.systems = systems;
+        } else {
+            params.skipSystems = 1;
+        }
         if (days) {
             params.days = days;
         } else {
@@ -53,9 +59,12 @@ module.exports.search = async (validatedQuery, userUID = null) => {
             params.placeLat ?? null,
             params.placeLng ?? null,
             params.radius ?? null,
+            params.skipSystems ?? 0,
+            params.systems ?? null
         ];
 
         const completeQuery = global.mysql.format(query, queryParams);
+        console.log(completeQuery);
 
         const [ oneshots ] = await global.db.query(completeQuery);
 
@@ -73,7 +82,7 @@ module.exports.search = async (validatedQuery, userUID = null) => {
 }
 
 module.exports.validateQuery = (queryToValidate) => {
-    const { days, placeLat, placeLng, radius, system, timeFrom, timeTo } = queryToValidate;
+    const { days, placeLat, placeLng, radius, systems, timeFrom, timeTo } = queryToValidate;
     if (days && (!Array.isArray(days) || days.length === 0)) {
         return false;
     }
@@ -96,7 +105,7 @@ module.exports.validateQuery = (queryToValidate) => {
             return false;
         }
     }
-    if (system && !Array.isArray(system)) {
+    if (systems && !Array.isArray(systems)) {
         return false;
     }
     // query is not valid when either timeFrom or timeTo are defined but not both of them
