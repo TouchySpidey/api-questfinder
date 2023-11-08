@@ -15,7 +15,7 @@ const socketIo = initSocketIo(server, {
     }
 });
 
-const port = global.APP_ENVIRONMENT == 'production' ? null : 8080;
+const port = global.APP_ENVIRONMENT == 'production' ? (process.env.PORT ?? null) : 8080;
 app.use(cors({
     origin: process.env.FRONTEND_URL ?? 'http://localhost:8000',
     credentials: true
