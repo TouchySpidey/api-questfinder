@@ -12,7 +12,8 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
             chatType: receiverType,
             senderUID: sender.UID ?? null, // could be a system message
             nickname: sender.nickname,
-            content: message
+            content: message,
+            sentOn: new Date().toISOString()
         };
         global.sendSocketMessage(receiverUID, 'message', {
             ...messageBodyForSocket,
@@ -30,7 +31,8 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
             chatId: receiverUID,
             senderUID: sender.UID,
             nickname: sender.nickname,
-            content: message
+            content: message,
+            sentOn: new Date().toISOString()
         };
         const usersInOneshot = await getUsersInOneshot(receiverUID);
         usersInOneshot.forEach(user => {
@@ -39,6 +41,7 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
             }
         });
     }
+    return UID;
 }
 
 module.exports.chatView = (userUID, chatType, chatId) => {

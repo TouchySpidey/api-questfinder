@@ -1,5 +1,4 @@
 const tokenVerifier = require('./tokenVerifier');
-const { v4: uuidv4 } = require('uuid');
 const { chatView } = global.projectUtils;
 
 global.userSockets = {};
@@ -10,12 +9,11 @@ module.exports = (socketIo) => {
             const userData = await tokenVerifier(socket.handshake.query.token);
             const { firebaseUID } = userData;
             const userUID = firebaseUID ? await getUserUIDFromFirebaseUID(firebaseUID) : null;
-            const socketUID = userUID ? uuidv4() : null;
 
             socket.on('disconnect', () => {
                 if (userUID in global.userSockets) {
-                    if (socketUID in global.userSockets[userUID]) {
-                        delete global.userSockets[userUID][socketUID];
+                    if (socket.id in global.userSockets[userUID]) {
+                        delete global.userSockets[userUID][socket.id];
                         if (Object.keys(global.userSockets[userUID]).length === 0) delete global.userSockets[userUID];
                     }
                 }
@@ -28,7 +26,7 @@ module.exports = (socketIo) => {
             if (!(userUID in global.userSockets)) {
                 global.userSockets[userUID] = {};
             }
-            global.userSockets[userUID][socketUID] = socket;
+            global.userSockets[userUID][socket.id] = socket;
 
             socket.on('chat-view', async (body) => {
                 if (body && typeof body === 'object') {
@@ -38,6 +36,8 @@ module.exports = (socketIo) => {
                     }
                 }
             })
+
+            console.log(`Socket connected: ${socket.id}`);
         });
     } catch (e) {
         console.log(e);
@@ -50,8 +50,8 @@ global.sendSocketMessage = (userUID, type, body) => {
         return;
     }
     // send message
-    for (let socketUID in global.userSockets[userUID]) {
-        global.userSockets[userUID][socketUID].emit(type, body);
+    for (let socketID in global.userSockets[userUID]) {
+        global.userSockets[userUID][socketID].emit(type, body);
     }
 }
 

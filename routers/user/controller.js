@@ -9,6 +9,7 @@ router.get('/startup', (req, res) => {
         res.status(200).json({
             new: user.new ?? false,
             nickname: user.nickname,
+            UID: user.UID,
         });
     } catch (error) {
         console.error(error);
