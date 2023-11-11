@@ -5,16 +5,15 @@ const { getUsersInOneshot } = require('./oneshot');
 module.exports.messageToDB = async (sender, receiverType, receiverUID, message) => {
     const UID = uuidv4();
     global.db.execute('INSERT INTO messages (UID, senderUID, receiverType, receiverUID, content, sentOn) VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())', [UID, sender.UID ?? null, receiverType, receiverUID, message]);
+    const messageBodyForSocket = {
+        UID,
+        chatType: receiverType,
+        content: message,
+        sentOn: new Date().toISOString(),
+        senderUID: sender.UID ?? null,
+        nickname: sender.nickname ?? null,
+    };
     if (receiverType === 'USER') {
-        // send socket message to both sender and receiver
-        const messageBodyForSocket = {
-            messageUID: UID,
-            chatType: receiverType,
-            senderUID: sender.UID ?? null, // could be a system message
-            nickname: sender.nickname,
-            content: message,
-            sentOn: new Date().toISOString()
-        };
         global.sendSocketMessage(receiverUID, 'message', {
             ...messageBodyForSocket,
             chatId: sender.UID
@@ -24,16 +23,7 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
             chatId: receiverUID
         });
     } else if (receiverType === 'ONESHOT') {
-        // send socket message to all users in the oneshot
-        const messageBodyForSocket = {
-            messageUID: UID,
-            chatType: receiverType,
-            chatId: receiverUID,
-            senderUID: sender.UID,
-            nickname: sender.nickname,
-            content: message,
-            sentOn: new Date().toISOString()
-        };
+        messageBodyForSocket.chatId = receiverUID;
         const usersInOneshot = await getUsersInOneshot(receiverUID);
         usersInOneshot.forEach(user => {
             if (user.isIn) {
@@ -90,35 +80,7 @@ module.exports.listMessages = async (chatType, interlocutorUID, userUID) => {
         ORDER BY sentOn ASC`;
         [ messagesRows ] = await global.db.execute(sql, [userUID, chatType, interlocutorUID, userUID, statuses.ACCEPTED, statuses.KICKED, statuses.LEFT]);
     }
-    return mapMessages(messagesRows, userUID);
-}
-
-function mapMessages(messagesRows, userUID) {
-    return messagesRows.map(message => {
-        if (message.senderUID === userUID) {
-            message.isMine = true;
-        } else {
-            message.isMine = false;
-        }
-        if (message.senderUID === null) {
-            message.sender = 'system';
-            message.senderUID = 'SYSTEM';
-            message.isSystem = true;
-        } else {
-            message.isSystem = false;
-            if (message.nickname === null) {
-                message.nickname = '[deleted]';
-            }
-        }
-        if (message.chatType === 'ONESHOT') {
-            if (message.masterUID === userUID) {
-                message.isMaster = true;
-            } else {
-                message.isMaster = false;
-            }
-        }
-        return message;
-    });
+    return messagesRows;
 }
 
 module.exports.listChats = async (userUID) => {
@@ -168,7 +130,7 @@ module.exports.listChats = async (userUID) => {
     LEFT JOIN oneshots ON oneshots.UID = chatID
     LEFT JOIN users sender ON sender.UID = messages.senderUID`;
     const [ groupChats ] = await global.db.execute(groupChatsQuery, [ userUID, userUID, statuses.ACCEPTED, statuses.KICKED, statuses.LEFT ]);
-    const chats = mapMessages(privateChats, userUID).concat(mapMessages(groupChats, userUID));
+    const chats = privateChats.concat(groupChats);
     chats.sort((a, b) => {
         return b.lastMessageDT - a.lastMessageDT;
     });
