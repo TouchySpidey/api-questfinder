@@ -55,6 +55,11 @@ module.exports.view = async (req, res) => {
         };
         if (isMaster) {
             output.status = statuses.MASTER;
+            const [ joinRequestRows ] = await global.db.execute(`SELECT users.nickname, users.UID, users.bio, join_requests.status, join_requests.updatedOn
+            FROM join_requests
+            LEFT JOIN users ON join_requests.userUID = users.UID
+            WHERE oneshotUID = ?`, [ oneshotUID ]);
+            output.members = joinRequestRows;
         } else {
             const [ joinRequestRows ] = await global.db.execute(`SELECT * FROM join_requests WHERE oneshotUID = ? AND userUID = ?`, [ oneshotUID, user.UID ]);
             if (joinRequestRows.length === 0) {
