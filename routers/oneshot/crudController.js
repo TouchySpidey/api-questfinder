@@ -28,6 +28,14 @@ module.exports.post = async (req, res) => {
         );
         res.status(201).json({ UID });
         messageToDB({}, 'ONESHOT', UID, 'Chat room aperta');
+        triggerAlerts({
+            UID,
+            date,
+            time,
+            placeLat,
+            placeLng,
+            gameSystem,
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).send("Internal Server Error");
@@ -217,4 +225,60 @@ function validateInput(res, inputToValidate) {
     }
 
     return inputToValidate;
+}
+async function triggerAlerts(parameters) {
+    console.log(parameters);
+    const weekDay = moment(parameters.date, 'YYYY-MM-DD').day();
+    const formattedTime = moment(parameters.time, 'HH:mm').format('HH:mm');
+    const [ alerts ] = await global.db.execute(`    SELECT *
+    FROM alerts
+    LEFT JOIN devices ON alerts.userUID = devices.userUID
+    LEFT JOIN users ON alerts.userUID = users.UID
+    WHERE (
+        days = '##' OR days LIKE CONCAT('%#', ?, '#%')
+    ) AND (
+        timeFrom IS NULL AND timeTo IS NULL
+        OR
+        CAST(? AS TIME) BETWEEN timeFrom AND timeTo
+    ) AND (
+        radius IS NULL AND centerLat IS NULL AND centerLng IS NULL
+        OR
+        ST_Distance_Sphere(POINT(centerLat, centerLng), POINT(?, ?)) / 1000 <= radius
+    )`, [
+        weekDay,
+        formattedTime,
+        parameters.placeLat,
+        parameters.placeLng,
+    ]);
+    console.log(alerts);
+    const tokens = [];
+    const bcc = [];
+	for (const alert of alerts) {
+        if (alert.viaPush && alert.token) {
+            tokens.push(alert.token);
+        }
+        if (alert.viaEmail) {
+            bcc.push(alert.email);
+        }
+    }
+    console.log(tokens);
+    console.log(bcc);
+    if (tokens.length) {
+        const weekDayNameLocale = moment(parameters.date, 'YYYY-MM-DD').locale('it').format('dddd');
+        const date = moment(parameters.date, 'YYYY-MM-DD').format('DD');
+        const month = moment(parameters.date, 'YYYY-MM-DD').locale('it').format('MMMM');
+        const time = moment(parameters.time, 'HH:mm').format('HH:mm');
+        global.firebase.messaging().sendMulticast({
+            tokens,
+            data: {
+                title: 'Nuova Quest pubblicata!',
+                body: `${weekDayNameLocale} ${date} ${month} alle ${time}. Guarda tutti i dettagli!`,
+                url: `${process.env.FRONTEND_URL ?? 'http://localhost:8000'}/?action=quest&pars[]=${parameters.UID}}`,
+            },
+        }).then((response) => {
+            console.log(response);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
 }

@@ -92,7 +92,7 @@ function validateInput(res, inputToValidate) {
         inputToValidate.radius = null;
     }
     if (!days) {
-        inputToValidate.days = null;
+        inputToValidate.days = [];
     }
     if (!timeFrom) {
         inputToValidate.timeFrom = null;
@@ -101,23 +101,16 @@ function validateInput(res, inputToValidate) {
         inputToValidate.timeTo = null;
     }
 
-    if (!moment(timeFrom, 'HH:mm', true).isValid() || !moment(timeTo, 'HH:mm', true).isValid()) {
+    if (timeFrom && !moment(timeFrom, 'HH:mm', true).isValid()) {
         res.status(400).send('Invalid time format');
         return;
     }
-
-    if (moment(timeFrom, 'HH:mm').isAfter(moment(timeTo, 'HH:mm'))) {
-        res.status(400).send('Invalid time range');
+    if (timeTo && !moment(timeTo, 'HH:mm', true).isValid()) {
+        res.status(400).send('Invalid time format');
         return;
     }
-
-    if (!Array.isArray(days) || days.length === 0) {
-        res.status(400).send('Invalid days');
-        return;
-    }
-
-    if (!timeFrom || !timeTo || timeFrom.length === 0 || timeTo.length === 0) {
-        res.status(400).send('Invalid time');
+    if (timeFrom && !timeTo || !timeFrom && timeTo) {
+        res.status(400).send('Missing time');
         return;
     }
 
