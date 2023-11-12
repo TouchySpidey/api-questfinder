@@ -3,13 +3,21 @@ const router = express.Router();
 
 const { messageToDB, listChats, listMessages, listOneshots, lastViewForChat } = global.projectUtils;
 
-router.get('/startup', (req, res) => {
+router.get('/startup', async (req, res) => {
     try {
         const { user } = req;
+        const [devicesRow] = await global.db.execute('SELECT * FROM devices WHERE userUID = ?', [user.UID]);
+        const devices = devicesRow.map(device => {
+            return {
+                token: device.token,
+                label: device.label,
+            };
+        });
         res.status(200).json({
             new: user.new ?? false,
             nickname: user.nickname,
             UID: user.UID,
+            devices,
         });
     } catch (error) {
         console.error(error);

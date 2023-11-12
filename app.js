@@ -39,11 +39,6 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/test.html');
 });
 
-app.get('/firebase-messaging-sw.js', (req, res) => {
-    // firebase-messaging-sw.js
-    res.sendFile(__dirname + '/firebase-messaging-sw.js');
-});
-
 // handle routes
 require('./routers/routers')(app);
 

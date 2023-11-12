@@ -8,7 +8,7 @@ router.post('/new', async (req, res) => {
     try {
         const validatedInput = validateInput(res, req.body);
         if (!validatedInput) return;
-        const { label, center, radius, days, time, viaPush, viaEmail } = validatedInput;
+        const { label, placeLat, placeLng, radius, days, timeFrom, timeTo, viaPush, viaEmail } = validatedInput;
 
         const { user } = req;
 
@@ -20,21 +20,22 @@ router.post('/new', async (req, res) => {
             uid: UID,
             userUID: user.UID,
             label,
-            centerLat: center.lat,
-            centerLng: center.lng,
+            placeLat,
+            placeLng,
             radius,
             days: _days,
-            timeFrom: time.from,
-            timeTo: time.to,
+            timeFrom,
+            timeTo,
             viaPush,
             viaEmail,
             userUID: user.uid,
         };
+        console.log([UID, user.UID, label, placeLat, placeLng, radius, _days, timeFrom, timeTo, viaPush, viaEmail]);
 
         const [rows] = await global.db.execute(`INSERT INTO alerts
             (UID, userUID, label, centerLat, centerLng, radius, days, timeFrom, timeTo, viaPush, viaEmail, createdOn)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
-            [UID, user.UID, label, center.lat, center.lng, radius, _days, time.from, time.to, viaPush, viaEmail]
+            [UID, user.UID, label, placeLat, placeLng, radius, _days, timeFrom, timeTo, viaPush, viaEmail]
         );
         res.status(201).json({ UID });
     } catch (error) {
@@ -75,18 +76,37 @@ router.get('/list', async (req, res) => {
 });
 
 function validateInput(res, inputToValidate) {
-    const { label, center, radius, days, time } = inputToValidate;
-    if (!label || !center || !radius || !days || !time) {
-        res.status(400).send('Missing required fields');
-        return;
+    const { label, placeLat, placeLng, radius, days, timeFrom, timeTo } = inputToValidate;
+    // if (!label || !placeLat || !placeLng || !radius || !days || !time) {
+    //     res.status(400).send('Missing required fields');
+    //     return;
+    // }
+
+    if (!placeLat) {
+        inputToValidate.placeLat = null;
+    }
+    if (!placeLng) {
+        inputToValidate.placeLng = null;
+    }
+    if (!radius) {
+        inputToValidate.radius = null;
+    }
+    if (!days) {
+        inputToValidate.days = null;
+    }
+    if (!timeFrom) {
+        inputToValidate.timeFrom = null;
+    }
+    if (!timeTo) {
+        inputToValidate.timeTo = null;
     }
 
-    if (!moment(time.from, 'HH:mm', true).isValid() || !moment(time.to, 'HH:mm', true).isValid()) {
+    if (!moment(timeFrom, 'HH:mm', true).isValid() || !moment(timeTo, 'HH:mm', true).isValid()) {
         res.status(400).send('Invalid time format');
         return;
     }
 
-    if (moment(time.from, 'HH:mm').isAfter(moment(time.to, 'HH:mm'))) {
+    if (moment(timeFrom, 'HH:mm').isAfter(moment(timeTo, 'HH:mm'))) {
         res.status(400).send('Invalid time range');
         return;
     }
@@ -96,7 +116,7 @@ function validateInput(res, inputToValidate) {
         return;
     }
 
-    if (!time.from || !time.to || time.from.length === 0 || time.to.length === 0) {
+    if (!timeFrom || !timeTo || timeFrom.length === 0 || timeTo.length === 0) {
         res.status(400).send('Invalid time');
         return;
     }
