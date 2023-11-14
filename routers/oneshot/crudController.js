@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const { statuses, validateQuery, search, listOneshots, messageToDB, listMessages, lastViewForChat } = global.projectUtils;
+const nodemailer = require('nodemailer');
 
 module.exports.post = async (req, res) => {
     try {
@@ -227,7 +228,6 @@ function validateInput(res, inputToValidate) {
     return inputToValidate;
 }
 async function triggerAlerts(parameters) {
-    console.log(parameters);
     const weekDay = moment(parameters.date, 'YYYY-MM-DD').day();
     const formattedTime = moment(parameters.time, 'HH:mm').format('HH:mm');
     const [ alerts ] = await global.db.execute(`    SELECT *
@@ -250,7 +250,6 @@ async function triggerAlerts(parameters) {
         parameters.placeLat,
         parameters.placeLng,
     ]);
-    console.log(alerts);
     const tokens = [];
     const bcc = [];
 	for (const alert of alerts) {
@@ -261,13 +260,11 @@ async function triggerAlerts(parameters) {
             bcc.push(alert.email);
         }
     }
-    console.log(tokens);
-    console.log(bcc);
+    const weekDayNameLocale = moment(parameters.date, 'YYYY-MM-DD').locale('it').format('dddd');
+    const date = moment(parameters.date, 'YYYY-MM-DD').format('DD');
+    const month = moment(parameters.date, 'YYYY-MM-DD').locale('it').format('MMMM');
+    const time = moment(parameters.time, 'HH:mm').format('HH:mm');
     if (tokens.length) {
-        const weekDayNameLocale = moment(parameters.date, 'YYYY-MM-DD').locale('it').format('dddd');
-        const date = moment(parameters.date, 'YYYY-MM-DD').format('DD');
-        const month = moment(parameters.date, 'YYYY-MM-DD').locale('it').format('MMMM');
-        const time = moment(parameters.time, 'HH:mm').format('HH:mm');
         global.firebase.messaging().sendMulticast({
             tokens,
             data: {
@@ -279,6 +276,35 @@ async function triggerAlerts(parameters) {
             console.log(response);
         }).catch((error) => {
             console.error(error);
+        });
+    }
+    if (bcc.length) {
+        const email = process.env.QUESTFINDER_EMAIL_ADDRESS;
+        const password = process.env.QUESTFINDER_EMAIL_PASSWORD;
+        const transporter = nodemailer.createTransport({
+            pool: true,
+            host: 'smtps.aruba.it',
+            port: 465,
+            secure: true,
+            auth: {
+                user: email,
+                pass: password,
+            },
+        });
+        const mailOptions = {
+            from: email,
+            to: bcc.filter((email, index) => bcc.indexOf(email) === index), // remove duplicates
+            subject: 'Nuova Quest pubblicata!',
+            text: `${weekDayNameLocale} ${date} ${month} alle ${time}. Entra nell'app per vedere tutti i dettagli!`,
+            html: `<p>${weekDayNameLocale} ${date} ${month} alle ${time}. Entra nell'app per vedere tutti i dettagli!</p>`,
+        };
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error(error);
+            } else {
+                console.log(info);
+            }
+            transporter.close();
         });
     }
 }
