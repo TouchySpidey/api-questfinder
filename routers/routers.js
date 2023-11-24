@@ -1,6 +1,13 @@
 const authenticate = require('../server_utils/apiAuthenticator');
 
 module.exports = app => {
+    app.get('/api/keys', (req, res) => {
+        res.send({
+            'firebase': global.firebaseServiceAccount,
+            'google': process.env.GOOGLE_API_KEY_FRONTEND,
+        });
+    });
+
     app.use('/api/public', require('./_public/controller'));
     
     app.use('/api/alert', authenticate, require('./alert/controller'));

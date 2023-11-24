@@ -15,6 +15,8 @@ module.exports = () => {
         // It's not a JSON string, so treat it as a file path
         serviceAccount = require(process.env.QUESTFINDER_SERVICE_ACCOUNT);
     }
+
+    global.firebaseServiceAccount = serviceAccount;
     
     // Initialize Firebase
     global.firebase.initializeApp({
