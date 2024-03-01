@@ -1,23 +1,26 @@
 const authenticate = require('../server_utils/apiAuthenticator');
 
-module.exports = app => {
-    app.get('/api/keys', (req, res) => {
-        res.send({
-            'firebase': JSON.parse(process.env.FIREBASE_API_KEY_FRONTEND),
-            'google': process.env.GOOGLE_API_KEY_FRONTEND,
-        });
-    });
+const express = require('express');
+const appRouter = express.Router();
 
-    app.use('/api/public', require('./_public/controller'));
-    
-    app.use('/api/alert', authenticate, require('./alert/controller'));
-    app.use('/api/user', authenticate, require('./user/controller'));
-    app.use('/api/oneshot', authenticate, require('./oneshot/routing'));
-    app.use('/api/device', authenticate, require('./device/controller'));
-    app.use('/api/notificationPreferences', authenticate, require('./notificationPreferences/controller'));
-
-    // 404
-    app.use((req, res) => {
-        res.status(404).send({ error: '404: Not Found' });
+appRouter.get('/api/keys', (req, res) => {
+    res.send({
+        'firebase': JSON.parse(process.env.FIREBASE_API_KEY_FRONTEND),
+        'google': process.env.GOOGLE_API_KEY_FRONTEND,
     });
-}
+});
+
+appRouter.use('/api/public', require('./_public/controller'));
+
+appRouter.use('/api/alert', authenticate, require('./alert/controller'));
+appRouter.use('/api/user', authenticate, require('./user/controller'));
+appRouter.use('/api/oneshot', authenticate, require('./oneshot/routing'));
+appRouter.use('/api/device', authenticate, require('./device/controller'));
+appRouter.use('/api/notificationPreferences', authenticate, require('./notificationPreferences/controller'));
+
+// 404
+appRouter.use((req, res) => {
+    res.status(404).send({ error: '404: Not Found' });
+});
+
+module.exports = appRouter;
