@@ -21,7 +21,7 @@ console.log(`App cors options: ${JSON.stringify(_CORS_OPTIONS, null, 4)}`);
 app.use(express.json());
 
 /* One to rule them all */
-require('./questfinder/app')(app, server);
+app.use('/questfinder', require('./questfinder/app')(app, server));
 
 const port = global.APP_ENVIRONMENT == 'production' ? (process.env.PORT ?? null) : 8080;
 
