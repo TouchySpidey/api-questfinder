@@ -1,8 +1,10 @@
 global.APP_ENVIRONMENT = process.env.APP_ENVIRONMENT ?? 'dev';
+global.tokenVerifier = require('./tokenVerifier');
 
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const initSocketIo = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,8 +22,20 @@ app.use(cors(_CORS_OPTIONS));
 console.log(`App cors options: ${JSON.stringify(_CORS_OPTIONS, null, 4)}`);
 app.use(express.json());
 
+// database
+require('./database')(app);
+
 /* One to rule them all */
 require('./questfinder/app')(app, server);
+
+// handle websockets
+const socketIo = initSocketIo(server, {
+    cors: {
+        origin: "*", // Replace with your frontend URL
+        methods: ["GET", "POST", "DELETE"],
+    }
+});
+require('./webSockets')(socketIo);
 
 const port = global.APP_ENVIRONMENT == 'production' ? (process.env.PORT ?? null) : 8080;
 

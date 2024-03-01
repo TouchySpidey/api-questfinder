@@ -1,4 +1,3 @@
-const tokenVerifier = require('./tokenVerifier');
 const { chatView } = global.projectUtils;
 
 global.userSockets = {};
@@ -6,7 +5,7 @@ global.userSockets = {};
 module.exports = (socketIo) => {
     try {
         socketIo.on('connection', async (socket) => {
-            const userData = await tokenVerifier(socket.handshake.query.token);
+            const userData = await global.tokenVerifier(socket.handshake.query.token);
             const { firebaseUID } = userData;
             const userUID = firebaseUID ? await getUserUIDFromFirebaseUID(firebaseUID) : null;
 
@@ -18,11 +17,11 @@ module.exports = (socketIo) => {
                     }
                 }
             })
-            
+
             if (!userUID) {
                 return socket.disconnect(true);;
             }
-        
+
             if (!(userUID in global.userSockets)) {
                 global.userSockets[userUID] = {};
             }
