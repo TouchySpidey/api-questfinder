@@ -7,10 +7,17 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors({
+app.use((req, res, next) => {
+    // Disable caching for all routes
+    res.header('Cache-Control', 'no-store');
+    next();
+});
+const _CORS_OPTIONS = {
     origin: process.env.FRONTEND_URL ?? 'http://localhost:8000',
     credentials: true
-}));
+};
+app.use(cors(_CORS_OPTIONS));
+console.log(`App cors options: ${JSON.stringify(_CORS_OPTIONS, null, 4)}`);
 app.use(express.json());
 
 /* One to rule them all */

@@ -11,7 +11,7 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
         content: message,
         sentOn: new Date().toISOString(),
         senderUID: sender.UID ?? null,
-        nickname: sender.nickname ?? null,
+        nickname: sender.nickname ?? 'system',
     };
     if (receiverType === 'USER') {
         global.sendSocketMessage(receiverUID, 'message', {

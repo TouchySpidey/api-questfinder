@@ -3,7 +3,7 @@ const authenticate = require('../server_utils/apiAuthenticator');
 module.exports = app => {
     app.get('/api/keys', (req, res) => {
         res.send({
-            'firebase': global.firebaseServiceAccount,
+            'firebase': JSON.parse(process.env.FIREBASE_API_KEY_FRONTEND),
             'google': process.env.GOOGLE_API_KEY_FRONTEND,
         });
     });
