@@ -1,4 +1,4 @@
-const authenticate = require('../server_utils/apiAuthenticator');
+const { authenticate } = require('../../apiAuthenticator');
 
 const express = require('express');
 const appRouter = express.Router();

@@ -1,4 +1,3 @@
-global.APP_ENVIRONMENT = process.env.APP_ENVIRONMENT ?? 'dev';
 global.projectUtils = require('./server_utils/projectUtils');
 
 // firebase

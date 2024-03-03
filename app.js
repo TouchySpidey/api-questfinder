@@ -18,6 +18,10 @@ const _CORS_OPTIONS = {
     origin: process.env.FRONTEND_URL ?? 'http://localhost:8000',
     credentials: true
 };
+app.use((req, res, next) => {
+    console.log(`Request origin: ${req.headers.origin}`);
+    next();
+});
 app.use(cors(_CORS_OPTIONS));
 console.log(`App cors options: ${JSON.stringify(_CORS_OPTIONS, null, 4)}`);
 app.use(express.json());
@@ -27,6 +31,7 @@ require('./database')(app);
 
 /* One to rule them all */
 require('./questfinder/app')(app, server);
+require('./monster-quiz/app')(app, server);
 
 // handle websockets
 const socketIo = initSocketIo(server, {
