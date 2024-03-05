@@ -2,12 +2,13 @@ const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 const router = express.Router();
-const { authenticate, authenticateIfPossible } = require('../apiAuthenticator');
 
-router.get('/api/image-source', authenticateIfPossible, async (req, res, next) => {
+router.get('/api/image-source', async (req, res, next) => {
     try {
         const quiz = await getQuiz();
-        const guesses = req.user ? await getUserGuesses(req.user.UID) : [];
+        const userUID = req.query.userUID;
+        if (!quiz) return res.status(404).send('No quiz found');
+        const guesses = await getUserGuesses(userUID);
         const imagePath = await getImagePath(guesses.some(guess => guess.exactGuessUID === quiz.monsterUID) ? 999 : guesses.length);
         const fullPath = path.join(__dirname, imagePath);
 
@@ -28,6 +29,117 @@ router.get('/api/image-source', authenticateIfPossible, async (req, res, next) =
         next(error);
     }
 });
+
+router.get('/api/quiz', async (req, res) => {
+    const userUID = req.query.userUID;
+    const guesses = await getUserGuesses(userUID);
+    const { response } = await collapseGuesses(guesses);
+    if (await hasWon(userUID)) {
+        response.correct = true;
+        return res.status(200).json(response);
+    }
+    const [availableOptions] = await global.db.execute(`SELECT UID, name
+    FROM mq_monsters`);
+    response.availableOptions = availableOptions;
+    res.status(200).json(response);
+});
+
+// router.post('/api/guess', authenticate, async (req, res) => {
+router.post('/api/guess', async (req, res) => {
+    const quiz = await getQuiz();
+    if (!quiz) return res.status(404).send('No quiz found');
+    const userUID = req.body.userUID;
+    const guess = req.body.guess;
+    // build the guesses object up until this one
+    const guessRows = await getUserGuesses(userUID);
+    const guessRowsNum = guessRows.length;
+
+    await global.db.execute(`INSERT INTO mq_guesses
+    (userUID, quizDate, guessNum, exactGuessUID, hintCR, hintHP, hintMovement, hintSize, hintAlignment, hintType)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [userUID, quiz.quizDate, guessRowsNum + 1, guess.exactGuessUID || null, guess.hintCR || null, guess.hintHP || null, guess.hintMovement || null, guess.hintSize || null, guess.hintAlignment || null, guess.hintType || null]);
+
+    guessRows.push({
+        userUID: userUID,
+        quizDate: quiz.quizDate,
+        guessNum: guessRows.length + 1,
+        exactGuessUID: guess.exactGuessUID || null,
+        hintCR: guess.hintCR || null,
+        hintHP: guess.hintHP || null,
+        hintMovement: guess.hintMovement || null,
+        hintSize: guess.hintSize || null,
+        hintAlignment: guess.hintAlignment || null,
+        hintType: guess.hintType || null
+    });
+
+    const { queryParts, params, response } = await collapseGuesses(guessRows);
+
+    // now find all possible answers that user can still give
+    const query = `SELECT UID, name
+    FROM mq_monsters
+    ${queryParts.length ? 'WHERE' : ''} ${queryParts.join(' AND ')}`;
+    const completeQuery = global.mysql.format(query, params);
+    const [availableOptions] = await global.db.query(completeQuery);
+
+    if (guess.exactGuessUID) {
+        if (guess.exactGuessUID === quiz.monsterUID) {
+            return res.json({ correct: true, score: availableOptions.length });
+        }
+    }
+
+    response.availableOptions = availableOptions;
+
+    return res.json(response);
+});
+
+async function collapseGuesses(guessRows) {
+    const quiz = await getQuiz();
+    const params = [];
+    const queryParts = [];
+    const response = {};
+
+    for (const guess of guessRows) {
+        if (guess.exactGuessUID) {
+            queryParts.push(`UID <> ?`);
+            params.push(guess.exactGuessUID);
+        }
+        if (guess.hintCR) {
+            queryParts.push(`crVal = ?`);
+            params.push(quiz.crVal);
+            response.hintCR = quiz.crVal;
+        }
+        if (guess.hintHP) {
+            queryParts.push(`hp = ?`);
+            params.push(quiz.hp);
+            response.hintHP = quiz.hp;
+        }
+        if (guess.hintMovement) {
+            queryParts.push(`speed = ?`);
+            params.push(quiz.speed);
+            response.hintMovement = quiz.speed;
+        }
+        if (guess.hintSize) {
+            queryParts.push(`sizeVal = ?`);
+            params.push(quiz.sizeVal);
+            response.hintSize = quiz.sizeVal;
+        }
+        if (guess.hintAlignment) {
+            queryParts.push(`alignment = ?`);
+            params.push(quiz.alignment);
+            response.hintAlignment = quiz.alignment;
+        }
+        if (guess.hintType) {
+            queryParts.push(`type = ?`);
+            params.push(quiz.type);
+            response.hintType = quiz.type;
+        }
+        if (guess.hintAC) {
+            queryParts.push(`ac = ?`);
+            params.push(quiz.ac);
+            response.hintAC = quiz.ac;
+        }
+    }
+    return { queryParts, params, response };
+}
 
 // Function to determine content type based on file extension
 function getImageContentType(imageName) {
@@ -61,7 +173,7 @@ async function getQuiz() {
     ON monsterUID = UID
     WHERE quizDate = ?`, [formattedDate]);
     if (!quizRow.length) {
-        return res.status(404).send('No shape found');
+        return false;
     }
     const quiz = quizRow[0];
     return quiz;
@@ -76,15 +188,6 @@ async function getUserGuesses(userUID) {
     return guessRows;
 }
 
-router.get('/api/quiz', authenticateIfPossible, async (req, res) => {
-    const [availableOptions] = await global.db.execute(`SELECT UID, name
-    FROM mq_monsters`);
-    if (req.user && (await hasWon(req.user.UID))) {
-        return res.status(200).json({ correct: true });
-    }
-    res.status(200).json({ availableOptions });
-});
-
 async function hasWon(userUID) {
     const quiz = await getQuiz();
     const [winningRow] = await global.db.execute(`SELECT *
@@ -93,85 +196,7 @@ async function hasWon(userUID) {
     if (winningRow.length) {
         return true;
     }
+    return false;
 }
-
-router.post('/api/guess', authenticate, async (req, res) => {
-    const quiz = await getQuiz();
-    const guess = req.body;
-    console.log(guess);
-    // build the guesses object up until this one
-    const guessRows = await getUserGuesses(req.user.UID);
-    const guessRowsNum = guessRows.length;
-
-    await global.db.execute(`INSERT INTO mq_guesses
-    (userUID, quizDate, guessNum, exactGuessUID, hintCR, hintHP, hintMovement, hintSize, hintAlignment, hintType)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [req.user.UID, quiz.quizDate, guessRowsNum + 1, guess.exactGuessUID || null, guess.hintCR || null, guess.hintHP || null, guess.hintMovement || null, guess.hintSize || null, guess.hintAlignment || null, guess.hintType || null]);
-
-    guessRows.push({
-        userUID: req.user.UID,
-        quizDate: quiz.quizDate,
-        guessNum: guessRows.length + 1,
-        exactGuessUID: guess.exactGuessUID || null,
-        hintCR: guess.hintCR || null,
-        hintHP: guess.hintHP || null,
-        hintMovement: guess.hintMovement || null,
-        hintSize: guess.hintSize || null,
-        hintAlignment: guess.hintAlignment || null,
-        hintType: guess.hintType || null
-    });
-
-    const params = [];
-    const queryParts = [];
-    for (const guess of guessRows) {
-        if (guess.exactGuessUID) {
-            queryParts.push(`UID <> ?`);
-            params.push(guess.exactGuessUID);
-        }
-        if (guess.hintCR) {
-            queryParts.push(`crVal = ?`);
-            params.push(quiz.crVal);
-        }
-        if (guess.hintHP) {
-            queryParts.push(`hp = ?`);
-            params.push(quiz.hp);
-        }
-        if (guess.hintMovement) {
-            queryParts.push(`speed = ?`);
-            params.push(quiz.speed);
-        }
-        if (guess.hintSize) {
-            queryParts.push(`sizeVal = ?`);
-            params.push(quiz.sizeVal);
-        }
-        if (guess.hintAlignment) {
-            queryParts.push(`alignment = ?`);
-            params.push(quiz.alignment);
-        }
-        if (guess.hintType) {
-            queryParts.push(`type = ?`);
-            params.push(quiz.type);
-        }
-        if (guess.hintAC) {
-            queryParts.push(`ac = ?`);
-            params.push(quiz.ac);
-        }
-    }
-    // now find all possible answers that user can still give
-    const query = `SELECT UID, name
-    FROM mq_monsters
-    ${queryParts.length ? 'WHERE' : ''} ${queryParts.join(' AND ')}`;
-    const completeQuery = global.mysql.format(query, params);
-    const [availableOptions] = await global.db.query(completeQuery);
-
-    if (guess.exactGuessUID) {
-        if (guess.exactGuessUID === quiz.monsterUID) {
-            return res.json({ correct: true, score: availableOptions.length });
-        }
-    }
-
-    return res.json({
-        availableOptions
-    });
-});
 
 module.exports = router;

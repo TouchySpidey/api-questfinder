@@ -15,7 +15,7 @@ app.use((req, res, next) => {
     next();
 });
 const _CORS_OPTIONS = {
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:8000',
+    origin: true,
     credentials: true
 };
 app.use((req, res, next) => {
