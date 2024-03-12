@@ -5,11 +5,14 @@ module.exports = async (app) => {
     try {
         const dbConfig = {
             host: process.env.QUESTFINDER_DB_HOST,
+            port: process.env.QUESTFINDER_DB_PORT,
             user: process.env.QUESTFINDER_DB_USER,
             password: process.env.QUESTFINDER_DB_PSWD,
             database: process.env.QUESTFINDER_DB_NAME,
             timezone: 'Z',
         };
+        console.log('Initializing database connection...');
+        console.log(dbConfig);
         if (process.env.QUESTFINDER_DB_SSL == 'true') {
             dbConfig.ssl = {
                 rejectUnauthorized: true,
