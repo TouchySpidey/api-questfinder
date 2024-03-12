@@ -24,7 +24,7 @@ module.exports = async (app) => {
         await global.db.execute('SELECT 1');
         console.log('Database connection established');
     } catch (error) {
-        console.error('Database connection failed');
+        console.error('Database connection failed:', error);
         process.exit(1);
     }
 }
