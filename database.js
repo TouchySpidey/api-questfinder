@@ -11,13 +11,13 @@ module.exports = async (app) => {
             database: process.env.QUESTFINDER_DB_NAME,
             timezone: 'Z',
         };
-        console.log('Initializing database connection...');
-        console.log(dbConfig);
         if (process.env.QUESTFINDER_DB_SSL == 'true') {
             dbConfig.ssl = {
                 rejectUnauthorized: true,
             };
         }
+        console.log('Initializing database connection...');
+        console.log(dbConfig);
         const pool = mysql.createPool(dbConfig);
         global._db = pool;
         global.db = pool.promise();
