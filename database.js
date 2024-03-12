@@ -1,8 +1,11 @@
 const mysql = require('mysql2');
 global.mysql = mysql;
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 module.exports = async (app) => {
     try {
+        await sleep(3000); // let the dns start
         const dbConfig = {
             host: process.env.QUESTFINDER_DB_HOST,
             port: process.env.QUESTFINDER_DB_PORT,
