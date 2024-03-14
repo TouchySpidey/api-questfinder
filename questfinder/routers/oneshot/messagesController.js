@@ -1,4 +1,4 @@
-const { statuses, messageToDB } = global.projectUtils;
+const { statuses, messageToDB } = global.projectUtils.questfinder;
 
 module.exports.send = async (req, res) => {
     try {

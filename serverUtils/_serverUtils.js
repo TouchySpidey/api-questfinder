@@ -1,7 +1,7 @@
 global.projectUtils = {}; // init for apps to use
 
-// token verifier
-require('./tokenVerifier');
+// api authenticator
+require('./apiAuthenticator');
 
 // firebase
 require('./initFirebase')();

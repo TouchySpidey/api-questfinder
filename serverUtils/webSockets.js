@@ -1,5 +1,5 @@
 const initSocketIo = require('socket.io');
-const { chatView } = global.projectUtils;
+global.socketListeners = {}; // object to store socket listeners for apps to use
 
 global.userSockets = {};
 
@@ -34,14 +34,9 @@ module.exports = (server) => {
             }
             global.userSockets[userUID][socket.id] = socket;
 
-            socket.on('chat-view', async (body) => {
-                if (body && typeof body === 'object') {
-                    const { chatType, chatId } = body;
-                    if (chatType && chatId) {
-                        chatView(userUID, chatType, chatId);
-                    }
-                }
-            })
+            for (let event in global.socketListeners) {
+                socket.on(event, global.socketListeners[event]);
+            }
 
             console.log(`Socket connected: ${socket.id}`);
         });

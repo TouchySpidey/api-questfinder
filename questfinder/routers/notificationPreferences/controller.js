@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getPreferences, validatePreference } = global.projectUtils;
+const { getPreferences, validatePreference } = global.projectUtils.questfinder;
 
 router.get('/list', async (req, res) => {
     try {

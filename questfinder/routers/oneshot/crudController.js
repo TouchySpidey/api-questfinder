@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-const { statuses, validateQuery, search, listOneshots, messageToDB, listMessages, lastViewForChat } = global.projectUtils;
+const { statuses, validateQuery, search, listOneshots, messageToDB, listMessages, lastViewForChat } = global.projectUtils.questfinder;
 const nodemailer = require('nodemailer');
 
 module.exports.post = async (req, res) => {

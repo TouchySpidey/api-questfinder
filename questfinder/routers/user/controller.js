@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { messageToDB, listChats, listMessages, listOneshots, lastViewForChat } = global.projectUtils;
+const { messageToDB, listChats, listMessages, listOneshots, lastViewForChat } = global.projectUtils.questfinder;
 
 router.get('/startup', async (req, res) => {
     try {

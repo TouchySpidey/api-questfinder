@@ -34,8 +34,13 @@ module.exports.messageToDB = async (sender, receiverType, receiverUID, message) 
     return UID;
 }
 
-module.exports.chatView = (userUID, chatType, chatId) => {
-    global.db.execute('REPLACE INTO chat_views VALUES (?, ?, ?, UTC_TIMESTAMP())', [ userUID, chatType, chatId ]);
+global.socketListeners['chat-view'] = async (body) => {
+    if (body && typeof body === 'object') {
+        const { chatType, chatId } = body;
+        if (chatType && chatId) {
+            global.db.execute('REPLACE INTO chat_views VALUES (?, ?, ?, UTC_TIMESTAMP())', [ userUID, chatType, chatId ]);
+        }
+    }
 }
 
 module.exports.lastViewForChat = async (userUID, chatType, chatId) => {

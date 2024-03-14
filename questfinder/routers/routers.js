@@ -1,4 +1,4 @@
-const { authenticate } = require('../../apiAuthenticator');
+const { authenticate } = global.authenticators;
 
 const express = require('express');
 const appRouter = express.Router();
