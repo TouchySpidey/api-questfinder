@@ -28,16 +28,16 @@ router.get('/startup', async (req, res) => {
 router.get('/profile', async (req, res) => {
     try {
         const { user } = req;
-        const [ usersRow ] = await global.db.execute(`SELECT nickname, bio, email, updatedOn
+        const [usersRow] = await global.db.execute(`SELECT nickname, bio, email, updatedOn
         FROM users
-        WHERE UID = ?`, [ user.UID ]);
+        WHERE UID = ?`, [user.UID]);
         if (usersRow.length === 0) {
             return res.status(404).send('User Not Found');
         }
         const userDb = usersRow[0];
-        const [ akas ] = await global.db.execute(`SELECT nickname, since, until
-        FROM akas
-        WHERE userUID = ?`, [ user.UID ]);
+        const [akas] = await global.db.execute(`SELECT nickname, since, until
+        FROM qf_akas
+        WHERE userUID = ?`, [user.UID]);
         return res.status(200).json({
             nickname: userDb.nickname,
             bio: userDb.bio,
@@ -56,14 +56,14 @@ router.get('/view/:UID', async (req, res) => {
         const { UID } = req.params;
         const [usersRow] = await global.db.execute(`SELECT UID, nickname, bio, signedUpOn
         FROM users
-        WHERE UID = ?`, [ UID ]);
+        WHERE UID = ?`, [UID]);
         if (usersRow.length === 0) {
             return res.status(404).send('User Not Found');
         }
         const user = usersRow[0];
-        const [ akas ] = await global.db.execute(`SELECT nickname, since, until
-        FROM akas
-        WHERE userUID = ?`, [ UID ]);
+        const [akas] = await global.db.execute(`SELECT nickname, since, until
+        FROM qf_akas
+        WHERE userUID = ?`, [UID]);
         const oneshots = await listOneshots(UID);
         const myOneshots = await listOneshots(req.user.UID);
         return res.status(200).json({
@@ -93,15 +93,15 @@ router.post('/update', async (req, res) => {
 
         await connection.beginTransaction();
 
-        const [ userRow ] = await connection.execute('SELECT * FROM users WHERE UID = ?', [user.UID]);
+        const [userRow] = await connection.execute('SELECT * FROM users WHERE UID = ?', [user.UID]);
         if (!userRow.length) {
             return res.status(404).send('User Not Found');
         }
         const userDb = userRow[0];
-        
+
         if (validatedInput.nickname) {
-            await connection.execute('UPDATE users SET nickname = ?, updatedOn = UTC_TIMESTAMP() WHERE UID = ?', [ validatedInput.nickname, userDb.UID ]);
-            await connection.execute('INSERT akas (userUID, nickname, since, until) VALUES (?, ?, ?, UTC_TIMESTAMP())', [ userDb.UID, userDb.nickname, userDb.updatedOn ]);
+            await connection.execute('UPDATE users SET nickname = ?, updatedOn = UTC_TIMESTAMP() WHERE UID = ?', [validatedInput.nickname, userDb.UID]);
+            await connection.execute('INSERT qf_akas (userUID, nickname, since, until) VALUES (?, ?, ?, UTC_TIMESTAMP())', [userDb.UID, userDb.nickname, userDb.updatedOn]);
         }
 
         if (validatedInput.bio) {
@@ -111,7 +111,7 @@ router.post('/update', async (req, res) => {
         if (validatedInput.email) {
             await connection.execute('UPDATE users SET email = ?, updatedOn = UTC_TIMESTAMP() WHERE UID = ?', [validatedInput.email, userDb.UID]);
         }
-        
+
         await connection.commit();
         res.status(200).send('OK');
     } catch (error) {

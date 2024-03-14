@@ -19,7 +19,7 @@ async function interact(toStatus, req, res) {
         const { oneshotUID } = req.params;
         let userUID;
         let targetUser;
-        const [ oneshotRows ] = await global.db.execute(`SELECT * FROM oneshots WHERE UID = ?`, [ oneshotUID ]);
+        const [oneshotRows] = await global.db.execute(`SELECT * FROM qf_oneshots WHERE UID = ?`, [oneshotUID]);
         if (oneshotRows.length === 0) {
             return res.status(404).send("Oneshot not found");
         }
@@ -31,7 +31,7 @@ async function interact(toStatus, req, res) {
                     return res.status(403).send("Permission denied");
                 }
                 userUID = req.params.userUID;
-                const [ userRow ] = await global.db.execute(`SELECT nickname FROM users WHERE UID = ?`, [ userUID ]);
+                const [userRow] = await global.db.execute(`SELECT nickname FROM users WHERE UID = ?`, [userUID]);
                 if (userRow.length === 0) {
                     return res.status(404).send("User not found");
                 }
@@ -45,10 +45,10 @@ async function interact(toStatus, req, res) {
                 userUID = user.UID;
                 break;
         }
-        const [ joinRequestRows ] = await global.db.execute(`SELECT * FROM join_requests WHERE oneshotUID = ? AND userUID = ?`, [ oneshotUID, userUID ]);
+        const [joinRequestRows] = await global.db.execute(`SELECT * FROM qf_join_requests WHERE oneshotUID = ? AND userUID = ?`, [oneshotUID, userUID]);
         if (joinRequestRows.length === 0) {
             if (toStatus == statuses.PENDING) {
-                await global.db.execute(`INSERT INTO join_requests (oneshotUID, userUID, status, updatedOn) VALUES (?, ?, ?, UTC_TIMESTAMP())`, [ oneshotUID, userUID, toStatus ]);
+                await global.db.execute(`INSERT INTO qf_join_requests (oneshotUID, userUID, status, updatedOn) VALUES (?, ?, ?, UTC_TIMESTAMP())`, [oneshotUID, userUID, toStatus]);
                 global.sendSocketMessage(oneshot.masterUID, 'join-request', { oneshotUID, userUID, nickname: user.nickname });
                 return res.status(200).send("Request Created");
             } else {
@@ -59,7 +59,7 @@ async function interact(toStatus, req, res) {
             switch (toStatus) {
                 case statuses.PENDING:
                     return res.status(409).send("Already requested");
-                
+
                 case statuses.ACCEPTED: case statuses.REJECTED:
                     if (joinRequest.status != statuses.PENDING) {
                         return res.status(409).send("Already responded");
@@ -80,18 +80,18 @@ async function interact(toStatus, req, res) {
 
                 default: break;
             }
-            await global.db.execute(`UPDATE join_requests SET status = ?, updatedOn = UTC_TIMESTAMP() WHERE userUID = ? AND oneshotUID = ?`, [ toStatus, userUID, oneshotUID ]);
+            await global.db.execute(`UPDATE qf_join_requests SET status = ?, updatedOn = UTC_TIMESTAMP() WHERE userUID = ? AND oneshotUID = ?`, [toStatus, userUID, oneshotUID]);
             switch (toStatus) {
                 case statuses.ACCEPTED:
-                    messageToDB({}, 'ONESHOT', oneshotUID, `Benvenuto ${ targetUser.nickname }`);
+                    messageToDB({}, 'ONESHOT', oneshotUID, `Benvenuto ${targetUser.nickname}`);
                     break;
-                
+
                 case statuses.KICKED:
-                    messageToDB({}, 'ONESHOT', oneshotUID, `${ targetUser.nickname } è stato cacciato`);
+                    messageToDB({}, 'ONESHOT', oneshotUID, `${targetUser.nickname} è stato cacciato`);
                     break;
 
                 case statuses.LEFT:
-                    messageToDB({}, 'ONESHOT', oneshotUID, `${ targetUser.nickname } ha lasciato la chat`);
+                    messageToDB({}, 'ONESHOT', oneshotUID, `${targetUser.nickname} ha lasciato la chat`);
                     break;
             }
             // todo fcm trigger

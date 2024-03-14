@@ -32,7 +32,7 @@ router.post('/new', async (req, res) => {
         };
         console.log([UID, user.UID, label, placeLat, placeLng, radius, _days, timeFrom, timeTo, viaPush, viaEmail]);
 
-        const [rows] = await global.db.execute(`INSERT INTO alerts
+        const [rows] = await global.db.execute(`INSERT INTO qf_alerts
             (UID, userUID, label, centerLat, centerLng, radius, days, timeFrom, timeTo, viaPush, viaEmail, createdOn)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
             [UID, user.UID, label, placeLat, placeLng, radius, _days, timeFrom, timeTo, viaPush, viaEmail]
@@ -47,8 +47,8 @@ router.post('/new', async (req, res) => {
 router.get('/list', async (req, res) => {
     try {
         const { user } = req;
-    
-        const [alertsRow] = await global.db.execute('SELECT * FROM alerts WHERE userUID = ?', [user.UID]);
+
+        const [alertsRow] = await global.db.execute('SELECT * FROM qf_alerts WHERE userUID = ?', [user.UID]);
         const alerts = alertsRow.map(alert => {
             return {
                 UID: alert.UID,
@@ -67,7 +67,7 @@ router.get('/list', async (req, res) => {
                 viaEmail: alert.viaEmail,
             };
         });
-    
+
         return res.status(200).json({ alerts });
     } catch (error) {
         console.error(error);

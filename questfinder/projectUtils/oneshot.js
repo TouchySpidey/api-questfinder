@@ -7,11 +7,11 @@ module.exports.search = async (validatedQuery, userUID = null) => {
 
         const query = `SELECT oneshots.*,
         master.nickname AS masterNickname,
-        join_requests.status AS joinStatus,
+        jr.status AS joinStatus,
         appointmentOn < UTC_TIMESTAMP() AS isPast,
         ST_Distance_Sphere(POINT(placeLat, placeLng), POINT(?, ?)) / 1000 AS distance
-        FROM oneshots
-        LEFT JOIN join_requests ON oneshots.UID = join_requests.oneshotUID AND join_requests.userUID = ?
+        FROM qf_oneshots oneshots
+        LEFT JOIN qf_join_requests jr ON oneshots.UID = jr.oneshotUID AND jr.userUID = ?
         LEFT JOIN users master ON master.UID = oneshots.masterUID
         WHERE isDeleted = 0
         AND (? = 1 OR WEEKDAY(appointmentOn) + 1 IN (?))
@@ -20,8 +20,8 @@ module.exports.search = async (validatedQuery, userUID = null) => {
         AND (? = 1 OR gameSystem IN (?))
         ORDER BY appointmentOn ASC`;
 
-        let params = { };
-        
+        let params = {};
+
         if (systems) {
             params.systems = systems;
         } else {
@@ -66,7 +66,7 @@ module.exports.search = async (validatedQuery, userUID = null) => {
         const completeQuery = global.mysql.format(query, queryParams);
         console.log(completeQuery);
 
-        const [ oneshots ] = await global.db.query(completeQuery);
+        const [oneshots] = await global.db.query(completeQuery);
 
         if (userUID) {
             // populate isMaster with a boolean value
@@ -74,7 +74,7 @@ module.exports.search = async (validatedQuery, userUID = null) => {
                 oneshots[i].isMaster = oneshots[i].masterUID === userUID;
             }
         }
-        
+
         return oneshots;
     } catch (error) {
         console.error(error);
@@ -122,11 +122,11 @@ module.exports.validateQuery = (queryToValidate) => {
 }
 
 module.exports.listOneshots = async (userUID) => {
-    const [ oneshots ] = await global.db.execute(`SELECT o.*, status
-    FROM oneshots o
-    LEFT JOIN join_requests jr
+    const [oneshots] = await global.db.execute(`SELECT o.*, status
+    FROM qf_oneshots o
+    LEFT JOIN qf_join_requests jr
     ON o.UID = jr.oneshotUID
-    WHERE ? IN (o.masterUID, jr.userUID)`, [ userUID ]);
+    WHERE ? IN (o.masterUID, jr.userUID)`, [userUID]);
     return oneshots.map(oneshot => {
         oneshot.isMaster = oneshot.masterUID === userUID;
         oneshot.isIn = oneshot.status === statuses.ACCEPTED;
@@ -136,12 +136,12 @@ module.exports.listOneshots = async (userUID) => {
 }
 
 module.exports.getUsersInOneshot = async (oneshotUID) => {
-    const [ oneshotRows ] = await global.db.execute(`SELECT masterUID FROM oneshots WHERE UID = ?`, [ oneshotUID ]);
+    const [oneshotRows] = await global.db.execute(`SELECT masterUID FROM qf_oneshots WHERE UID = ?`, [oneshotUID]);
     if (oneshotRows.length === 0) {
         return [];
     }
     const oneshot = oneshotRows[0];
-    const [ masterRows ] = await global.db.execute(`SELECT UID, nickname, bio, signedUpOn FROM users WHERE UID = ?`, [ oneshot.masterUID ]);
+    const [masterRows] = await global.db.execute(`SELECT UID, nickname, bio, signedUpOn FROM users WHERE UID = ?`, [oneshot.masterUID]);
     if (masterRows.length === 0) {
         return [];
     }
@@ -149,10 +149,10 @@ module.exports.getUsersInOneshot = async (oneshotUID) => {
     master.isMaster = true;
     master.isIn = true;
     master.isPending = false;
-    const [ usersRows ] = await global.db.execute(`SELECT users.UID, users.nickname, users.bio, users.signedUpOn, join_requests.status
-    FROM join_requests
-    LEFT JOIN users ON join_requests.userUID = users.UID
-    WHERE join_requests.oneshotUID = ?`, [ oneshotUID ]);
+    const [usersRows] = await global.db.execute(`SELECT users.UID, users.nickname, users.bio, users.signedUpOn, jr.status
+    FROM qf_join_requests jr
+    LEFT JOIN users ON jr.userUID = users.UID
+    WHERE jr.oneshotUID = ?`, [oneshotUID]);
     const users = usersRows.map(user => {
         user.isMaster = user.UID === oneshot.masterUID;
         user.isIn = user.status === statuses.ACCEPTED || user.isMaster;

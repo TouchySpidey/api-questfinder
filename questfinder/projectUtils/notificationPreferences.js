@@ -1,5 +1,5 @@
 module.exports.getPreferences = async (userUID) => {
-    const [rows] = await global.db.execute('SELECT * FROM chat_notification_preferences WHERE userUID = ?', [userUID]);
+    const [rows] = await global.db.execute('SELECT * FROM qf_chat_notification_preferences WHERE userUID = ?', [userUID]);
     return rows;
 }
 
@@ -10,7 +10,7 @@ module.exports.validatePreference = (preference) => {
     if (!preference.chatType || !preference.chatId) {
         return false;
     }
-    if (! ('viaPush' in preference) || ! ('viaEmail' in preference)) {
+    if (!('viaPush' in preference) || !('viaEmail' in preference)) {
         return false;
     }
     const { chatType, chatId, viaPush, viaEmail } = preference;

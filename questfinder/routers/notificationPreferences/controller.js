@@ -20,7 +20,7 @@ router.post('/update', async (req, res) => {
         if (!preference) {
             return res.status(400).send("Bad Request");
         }
-        await global.db.execute('REPLACE INTO chat_notification_preferences (userUID, chatType, chatId, viaPush, viaEmail) VALUES (?, ?, ?, ?, ?)', [user.UID, preference.chatType, preference.chatId, preference.viaPush, preference.viaEmail]);
+        await global.db.execute('REPLACE INTO qf_chat_notification_preferences (userUID, chatType, chatId, viaPush, viaEmail) VALUES (?, ?, ?, ?, ?)', [user.UID, preference.chatType, preference.chatId, preference.viaPush, preference.viaEmail]);
         res.status(200).send("Updated");
     } catch (error) {
         console.error(error);

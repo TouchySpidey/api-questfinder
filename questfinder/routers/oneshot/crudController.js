@@ -10,9 +10,9 @@ module.exports.post = async (req, res) => {
             return;
         }
         const { date, time, isOnline, onlineDescription, placeLat, placeLng, placeDescription, title, playersMax, playersOut, gameLevel, description, gameSystem } = validatedInput;
-        
+
         const { user } = req;
-        
+
         const UID = uuidv4();
         const appointmentOn = date + ' ' + time + ':00';
 
@@ -25,14 +25,14 @@ module.exports.post = async (req, res) => {
             placeData.placeProvince = null;
         } else {
             // using google apis, get city name and province from lat and lng
-            const reverseGeocodeResponse = await global.googleMapsClient.reverseGeocode({latlng: [placeLat, placeLng]}).asPromise();
+            const reverseGeocodeResponse = await global.googleMapsClient.reverseGeocode({ latlng: [placeLat, placeLng] }).asPromise();
             const addressComponents = reverseGeocodeResponse.json.results[0].address_components;
             placeData.placeCity = addressComponents.find(component => component.types.includes('administrative_area_level_3')).long_name;
             placeData.placeProvince = addressComponents.find(component => component.types.includes('administrative_area_level_2')).long_name;
             placeData.onlineDescription = '';
         }
-    
-        const [rows] = await global.db.execute(`INSERT INTO oneshots
+
+        const [rows] = await global.db.execute(`INSERT INTO qf_oneshots
             (UID, masterUID, appointmentOn, isOnline, onlineDescription, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, gameSystem, playersMax, playersOut, gameLevel, description, createdOn)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
             [UID, user.UID, appointmentOn, isOnline, placeData.onlineDescription, placeLat, placeLng, placeDescription, placeData.placeCity, placeData.placeProvince, title, gameSystem, playersMax, playersOut, gameLevel, description]
@@ -57,12 +57,12 @@ module.exports.view = async (req, res) => {
     try {
         const { user } = req;
         const oneshotUID = req.params.UID;
-        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ?', [oneshotUID]);
+        const [oneshotRow] = await global.db.execute('SELECT * FROM qf_oneshots WHERE UID = ?', [oneshotUID]);
         if (oneshotRow.length === 0) {
             return res.status(404).send("Oneshot not found");
         }
         const oneshot = oneshotRow[0];
-        const [ masterRow ] = await global.db.execute('SELECT UID, nickname, bio, signedUpOn FROM users WHERE UID = ?', [oneshot.masterUID]);
+        const [masterRow] = await global.db.execute('SELECT UID, nickname, bio, signedUpOn FROM users WHERE UID = ?', [oneshot.masterUID]);
         if (masterRow.length === 0) {
             return res.status(404).send("Master not found");
         }
@@ -74,13 +74,13 @@ module.exports.view = async (req, res) => {
         };
         if (isMaster) {
             output.status = statuses.MASTER;
-            const [ joinRequestRows ] = await global.db.execute(`SELECT users.nickname, users.UID, users.bio, join_requests.status, join_requests.updatedOn
-            FROM join_requests
-            LEFT JOIN users ON join_requests.userUID = users.UID
-            WHERE oneshotUID = ?`, [ oneshotUID ]);
+            const [joinRequestRows] = await global.db.execute(`SELECT users.nickname, users.UID, users.bio, jr.status, jr.updatedOn
+            FROM qf_join_requests jr
+            LEFT JOIN users ON jr.userUID = users.UID
+            WHERE oneshotUID = ?`, [oneshotUID]);
             output.members = joinRequestRows;
         } else {
-            const [ joinRequestRows ] = await global.db.execute(`SELECT * FROM join_requests WHERE oneshotUID = ? AND userUID = ?`, [ oneshotUID, user.UID ]);
+            const [joinRequestRows] = await global.db.execute(`SELECT * FROM qf_join_requests WHERE oneshotUID = ? AND userUID = ?`, [oneshotUID, user.UID]);
             if (joinRequestRows.length === 0) {
                 output.status = statuses.NOT_REQUESTED;
             } else {
@@ -90,7 +90,7 @@ module.exports.view = async (req, res) => {
         output.messages = await listMessages('ONESHOT', oneshotUID, user.UID);
         output.messagesLastReading = await lastViewForChat(user.UID, 'ONESHOT', oneshotUID);
 
-        res.status(200).json( output );
+        res.status(200).json(output);
     } catch (error) {
         console.error(error);
         res.status(500).send("Internal Server Error");
@@ -112,7 +112,7 @@ module.exports.delete = async (req, res) => {
     try {
         const oneshotUID = req.params.UID;  // Assuming the UID is passed as a URL parameter
         const { user } = req;
-        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ?', [oneshotUID]);
+        const [oneshotRow] = await global.db.execute('SELECT * FROM qf_oneshots WHERE UID = ?', [oneshotUID]);
         if (oneshotRow.length === 0) {
             return res.status(404).send("Oneshot not found");
         }
@@ -123,7 +123,7 @@ module.exports.delete = async (req, res) => {
         if (oneshot.masterUID !== user.UID) {
             return res.status(403).send("Permission denied");
         }
-        await global.db.execute('UPDATE oneshots SET isDeleted = 1 WHERE UID = ?', [oneshotUID]);
+        await global.db.execute('UPDATE qf_oneshots SET isDeleted = 1 WHERE UID = ?', [oneshotUID]);
         res.status(200).send("Oneshot deleted successfully");
         messageToDB({}, 'ONESHOT', oneshotUID, 'Chat room chiusa');
     } catch (error) {
@@ -135,7 +135,7 @@ module.exports.delete = async (req, res) => {
 module.exports.edit = async (req, res) => {
     try {
         const oneshotUID = req.params.UID;
-        const [ oneshotRow ] = await global.db.execute('SELECT * FROM oneshots WHERE UID = ? AND isDeleted = 0', [oneshotUID]);
+        const [oneshotRow] = await global.db.execute('SELECT * FROM qf_oneshots WHERE UID = ? AND isDeleted = 0', [oneshotUID]);
         if (oneshotRow.length === 0) {
             return res.status(404).send("Oneshot not found");
         }
@@ -153,12 +153,12 @@ module.exports.edit = async (req, res) => {
         const appointmentOn = date + ' ' + time + ':00';
 
         // using google apis, get city name and province from lat and lng
-        const reverseGeocodeResponse = await global.googleMapsClient.reverseGeocode({latlng: [placeLat, placeLng]}).asPromise();
+        const reverseGeocodeResponse = await global.googleMapsClient.reverseGeocode({ latlng: [placeLat, placeLng] }).asPromise();
         const addressComponents = reverseGeocodeResponse.json.results[0].address_components;
         const placeCity = addressComponents.find(component => component.types.includes('administrative_area_level_3')).long_name;
         const placeProvince = addressComponents.find(component => component.types.includes('administrative_area_level_2')).long_name;
-    
-        await global.db.execute(`UPDATE oneshots
+
+        await global.db.execute(`UPDATE qf_oneshots
             SET appointmentOn = ?, placeLat = ?, placeLng = ?, placeDescription = ?, placeCity = ?, placeProvince = ?, title = ?, playersMax = ?, playersOut = ?, gameLevel = ?, description = ?
             WHERE UID = ?`,
             [appointmentOn, placeLat, placeLng, placeDescription, placeCity, placeProvince, title, playersMax, playersOut, gameLevel, description, oneshotUID]
@@ -217,7 +217,7 @@ function validateInput(res, inputToValidate) {
             return false;
         }
         inputToValidate.placeDescription = placeDescription ?? null;
-        
+
         inputToValidate.onlineDescription = null;
     }
     if (!title || title.length > 50) {
@@ -254,8 +254,8 @@ function validateInput(res, inputToValidate) {
 async function triggerAlerts(parameters) {
     const weekDay = moment(parameters.date, 'YYYY-MM-DD').day();
     const formattedTime = moment(parameters.time, 'HH:mm').format('HH:mm');
-    const [ alerts ] = await global.db.execute(`    SELECT *
-    FROM alerts
+    const [alerts] = await global.db.execute(`SELECT *
+    FROM qf_alerts alerts
     LEFT JOIN devices ON alerts.userUID = devices.userUID
     LEFT JOIN users ON alerts.userUID = users.UID
     WHERE (
@@ -276,7 +276,7 @@ async function triggerAlerts(parameters) {
     ]);
     const tokens = [];
     const bcc = [];
-	for (const alert of alerts) {
+    for (const alert of alerts) {
         if (alert.viaPush && alert.token) {
             tokens.push(alert.token);
         }
