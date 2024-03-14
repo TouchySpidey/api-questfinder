@@ -1,9 +1,16 @@
+const initSocketIo = require('socket.io');
 const { chatView } = global.projectUtils;
 
 global.userSockets = {};
 
-module.exports = (socketIo) => {
+module.exports = (server) => {
     try {
+        const socketIo = initSocketIo(server, {
+            cors: {
+                origin: "*", // allow all origins, especially since it's multi-app
+                methods: ["GET", "POST", "DELETE"],
+            }
+        });
         socketIo.on('connection', async (socket) => {
             const userData = await global.tokenVerifier(socket.handshake.query.token);
             const { firebaseUID } = userData;

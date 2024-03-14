@@ -1,46 +1,36 @@
 global.APP_ENVIRONMENT = process.env.APP_ENVIRONMENT ?? 'dev';
-global.tokenVerifier = require('./tokenVerifier');
 
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
-const initSocketIo = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
 
-app.use((req, res, next) => {
-    // Disable caching for all routes
-    res.header('Cache-Control', 'no-store');
-    next();
-});
+// CORS options
 const _CORS_OPTIONS = {
     origin: true,
     credentials: true
 };
+console.log(`App cors options: ${JSON.stringify(_CORS_OPTIONS, null, 4)}`);
+
+// Middlewares
 app.use((req, res, next) => {
     console.log(`Request origin: ${req.headers.origin}`);
+    // Disable caching for all routes, might wanna tune this later
+    res.header('Cache-Control', 'no-store');
     next();
 });
 app.use(cors(_CORS_OPTIONS));
-console.log(`App cors options: ${JSON.stringify(_CORS_OPTIONS, null, 4)}`);
 app.use(express.json());
 
-// database
-require('./database')(app);
+// Server Utils, like db, auth, web sockets, ...
+require('./serverUtils/_serverUtils')(app, server);
 
-/* One to rule them all */
-require('./questfinder/app')(app, server);
-require('./monster-quiz/app')(app, server);
-
-// handle websockets
-const socketIo = initSocketIo(server, {
-    cors: {
-        origin: "*", // Replace with your frontend URL
-        methods: ["GET", "POST", "DELETE"],
-    }
-});
-require('./webSockets')(socketIo);
+// One to rule them all
+require('./questfinder/app')(app);
+require('./monster-quiz/app')(app);
+require('./bookpack/app')(app);
 
 const port = global.APP_ENVIRONMENT == 'production' ? (process.env.PORT ?? null) : 8080;
 

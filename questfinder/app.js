@@ -1,13 +1,6 @@
-global.projectUtils = require('./server_utils/projectUtils');
+global.projectUtils.questfinder = require('./projectUtils/_projectUtils');
 
-// firebase
-require('./server_utils/initFirebase')();
-
-// google services
-require('./server_utils/googleServices');
-
-
-module.exports = (app, server) => {
+module.exports = (app) => {
     // handle routes
     app.use('/questfinder', require('./routers/routers'));
 }

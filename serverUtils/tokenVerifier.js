@@ -1,4 +1,4 @@
-module.exports = async (token) => {
+global.tokenVerifier = async (token) => {
     try {
         const decodedToken = await global.firebase.auth().verifyIdToken(token);
         return {

@@ -1,7 +1,5 @@
-const express = require('express');
-const path = require('path');
 
-module.exports = (app, server) => {
+module.exports = (app) => {
     // handle routes
     app.use('/monster-quiz', require('./router'));
 }
