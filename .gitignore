@@ -136,3 +136,6 @@ cgi-bin
 tmp
 .htaccess
 logs
+
+# mocha tests
+test

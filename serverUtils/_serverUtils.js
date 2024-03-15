@@ -11,7 +11,7 @@ require('./googleServices');
 
 module.exports = (app, server) => {
     // MySQL database
-    require('./database')(app);
+    app.waitingDB = require('./database');
 
     // web sockets
     require('./webSockets')(server);

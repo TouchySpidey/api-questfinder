@@ -2,10 +2,12 @@ const mysql = require('mysql2');
 global.mysql = mysql;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-module.exports = async (app) => {
+const connectToDB = async () => {
     try {
-        await sleep(3000); // let the dns start
+        const delay = process.env.DB_DELAY ?? 0;
+        if (delay) {
+            await sleep(delay);
+        }
         const dbConfig = {
             host: process.env.QUESTFINDER_DB_HOST,
             port: process.env.QUESTFINDER_DB_PORT,
@@ -30,4 +32,9 @@ module.exports = async (app) => {
         console.error('Database connection failed:', error);
         process.exit(1);
     }
-}
+};
+
+module.exports = new Promise(async (resolve, reject) => {
+    await connectToDB();
+    resolve();
+});

@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "mocha test/allTests.js --timeout 10000 --exit"
   },
   "author": "",
   "license": "ISC",
@@ -19,5 +20,10 @@
     "nodemailer": "^6.9.7",
     "socket.io": "^4.7.2",
     "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "chai-http": "^4.4.0",
+    "mocha": "^10.3.0"
   }
 }

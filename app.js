@@ -37,3 +37,5 @@ const port = global.APP_ENVIRONMENT == 'production' ? (process.env.PORT ?? null)
 server.listen(port, () => {
     console.log(`MultiApp listening on port ${server.address().port}, time: ${new Date()}`);
 });
+
+module.exports = app;
