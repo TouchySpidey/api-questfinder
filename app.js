@@ -3,6 +3,7 @@ global.APP_ENVIRONMENT = process.env.APP_ENVIRONMENT ?? 'dev';
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 });
 app.use(cors(_CORS_OPTIONS));
 app.use(express.json());
+app.use(cookieParser());
 
 // Server Utils, like db, auth, web sockets, ...
 require('./serverUtils/_serverUtils')(app, server);
