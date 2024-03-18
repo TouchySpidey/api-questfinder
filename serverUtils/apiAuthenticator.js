@@ -23,9 +23,9 @@ async function decodeTokenFirebase(token) {
     }
 }
 
-function decodeTokenVanilla(token) {
+function decodeTokenVanilla(token, ignoreExpiration = true) {
     try {
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration });
         return decodedToken;
     } catch (error) {
         return null;
@@ -62,7 +62,7 @@ const refreshAndValidateToken = async (accessToken, refreshToken, res) => {
     }
 }
 
-const decodeToken = async (token) => {
+const decodeToken = async (token, ignoreExpiration = true) => {
     let decodedToken = null;
     let tokenType = false;
     if (!token) return { decodedToken, tokenType };
@@ -72,7 +72,7 @@ const decodeToken = async (token) => {
         return { decodedToken, tokenType };
     }
 
-    if (decodedToken = decodeTokenVanilla(token)) {
+    if (decodedToken = decodeTokenVanilla(token, ignoreExpiration)) {
         tokenType = 'jwt';
         return { decodedToken, tokenType };
     }
@@ -84,26 +84,19 @@ const getAuthenticatedUser = async (req, res) => {
     try {
         const accessToken = getAccessToken(req);
         const { decodedToken, tokenType } = await decodeToken(accessToken);
-        if (tokenType == 'jwt') {
-            const { refreshToken } = req.cookies;
-            if (! await refreshAndValidateToken(accessToken, refreshToken, res)) return null;
-        }
         if (tokenType == 'firebase') {
-            const [existingUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, signedUpOn, updatedOn FROM users WHERE firebaseUid = ?', [decodedToken.firebaseUID]);
-            if (existingUserRows.length) {
-                return existingUserRows[0];
+            if (existingUser = await getFirebaseUserRecord(decodedToken.firebaseUID)) {
+                return existingUser;
             } else {
                 const UID = uuidv4();
                 await global.db.execute('INSERT INTO users (UID, firebaseUID, email, signedUpOn, updatedOn) VALUES (?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())', [UID, decodedToken.firebaseUID, decodedToken.email]);
-                const [newUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, signedUpOn, updatedOn FROM users WHERE firebaseUid = ?', [decodedToken.firebaseUID]);
-                return newUserRows[0];
+                return await getFirebaseUserRecord(decodedToken.firebaseUID);
             }
         }
         if (tokenType == 'jwt') {
-            const [existingUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, signedUpOn, updatedOn FROM users WHERE UID = ?', [decodedToken.UID]);
-            if (existingUserRows.length) {
-                return existingUserRows[0];
-            }
+            const { refreshToken } = req.cookies;
+            if (! await refreshAndValidateToken(accessToken, refreshToken, res)) return null;
+            return await getJwtUserRecord(decodedToken.UID);
         }
     } catch (error) {
         console.error(error);
@@ -111,7 +104,29 @@ const getAuthenticatedUser = async (req, res) => {
     return null;
 }
 
+async function getFirebaseUserRecord(firebaseUID) {
+    const [existingUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, nickname, signedUpOn, updatedOn FROM users WHERE firebaseUid = ?', [firebaseUID]);
+    return existingUserRows.length ? existingUserRows[0] : null;
+}
+
+async function getJwtUserRecord(UID) {
+    const [existingUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, nickname, signedUpOn, updatedOn FROM users WHERE UID = ?', [UID]);
+    return existingUserRows.length ? existingUserRows[0] : null;
+}
+
+const tokenVerifier = async (accessToken) => {
+    const { decodedToken, tokenType } = await decodeToken(accessToken, false);
+    if (tokenType == 'firebase') {
+        return await getFirebaseUserRecord(decodedToken.firebaseUID);
+    }
+    if (tokenType == 'jwt') {
+        return await getJwtUserRecord(decodedToken.UID);
+    }
+    return null;
+}
+
 global.authenticators = {
+    tokenVerifier,
     decodeToken,
     authenticate: async (req, res, next) => {
         try {

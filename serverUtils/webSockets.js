@@ -12,9 +12,8 @@ module.exports = (server) => {
             }
         });
         socketIo.on('connection', async (socket) => {
-            const userData = await global.tokenVerifier(socket.handshake.query.token);
-            const { firebaseUID } = userData;
-            const userUID = firebaseUID ? await getUserUIDFromFirebaseUID(firebaseUID) : null;
+            const userData = await global.authenticators.tokenVerifier(socket.handshake.query.token);
+            const { UID: userUID } = userData;
 
             socket.on('disconnect', () => {
                 if (userUID in global.userSockets) {
