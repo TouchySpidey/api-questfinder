@@ -89,13 +89,13 @@ const getAuthenticatedUser = async (req, res) => {
             if (! await refreshAndValidateToken(accessToken, refreshToken, res)) return null;
         }
         if (tokenType == 'firebase') {
-            const [existingUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, signedUpOn, updatedOn FROM users WHERE firebaseUid = ?', [firebaseToken.firebaseUID]);
+            const [existingUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, signedUpOn, updatedOn FROM users WHERE firebaseUid = ?', [decodedToken.firebaseUID]);
             if (existingUserRows.length) {
                 return existingUserRows[0];
             } else {
                 const UID = uuidv4();
-                await global.db.execute('INSERT INTO users (UID, firebaseUID, email, signedUpOn, updatedOn) VALUES (?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())', [UID, firebaseUID, email]);
-                const [newUserRows] = await global.db.execute('SELECT * FROM users WHERE firebaseUid = ?', [firebaseToken.firebaseUID]);
+                await global.db.execute('INSERT INTO users (UID, firebaseUID, email, signedUpOn, updatedOn) VALUES (?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())', [UID, decodedToken.firebaseUID, decodedToken.email]);
+                const [newUserRows] = await global.db.execute('SELECT UID, firebaseUID, email, signedUpOn, updatedOn FROM users WHERE firebaseUid = ?', [decodedToken.firebaseUID]);
                 return newUserRows[0];
             }
         }
