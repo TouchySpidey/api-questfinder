@@ -1,3 +1,5 @@
+global.REFRESH_TOKEN_TTL = process.env.REFRESH_TOKEN_TTL || '30d';
+const ACCESS_TOKEN_TTL = global.ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || '15m';
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
@@ -52,7 +54,7 @@ const refreshAndValidateToken = async (accessToken, refreshToken, res) => {
             UID: decodedAccessToken.UID,
             email: decodedAccessToken.email,
             nickname: decodedAccessToken.nickname
-        }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
         global.db.execute('UPDATE refresh_tokens SET refreshCounter = refreshCounter + 1 WHERE tokenUID = ?', [decodedRefreshToken.tokenUID]);
         res.header('Authorization', `Bearer ${accessToken}`);
 

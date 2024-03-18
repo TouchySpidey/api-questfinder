@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
+const { ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL } = global;
 
 /*
 signup:
@@ -135,12 +136,12 @@ router.post('/login', async (req, res) => {
             UID: user.UID,
             email: user.email,
             nickname: user.nickname,
-        }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        }, process.env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
         const tokenUID = uuidv4();
         const refreshToken = jwt.sign({
             tokenUID,
             userUID: user.UID,
-        }, process.env.JWT_SECRET, { expiresIn: '30d' });
+        }, process.env.JWT_SECRET, { expiresIn: REFRESH_TOKEN_TTL });
         global.db.execute(`INSERT INTO refresh_tokens (tokenUID, userUID, refreshCounter, createdOn, expiresOn)
             VALUES (?, ?, 0, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL 30 DAY))`, [tokenUID, user.UID]);
 
@@ -151,6 +152,10 @@ router.post('/login', async (req, res) => {
         console.error(error);
         return res.status(500).send("Internal Server Error");
     }
+});
+
+router.get('/refresh', global.authenticators.authenticate, async (req, res) => {
+    res.status(200).send('Refreshed');
 });
 
 const welcomeEmail = async (nickname, email) => {
