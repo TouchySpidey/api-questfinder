@@ -12,26 +12,29 @@ const buildQuery = (variables) => {
     }
 
     const pars = [], wheres = [];
+    if (distanceFromLat && distanceFromLon) {
+        // these must be the first 2 parameters in pars, because they are used in the SELECT clause
+        pars.push(distanceFromLat, distanceFromLon);
+        if (distance) {
+            wheres.push(`ST_Distance_Sphere(POINT(latitude, longitude), POINT(?, ?)) / 1000 <= ?`);
+            pars.push(distanceFromLat, distanceFromLon, distance);
+        }
+    } else if (orderBy === 'distance') {
+        orderBy = null;
+        orderDir = null;
+    }
     if (searchString) {
         wheres.push(`(title LIKE ? OR isbn LIKE ?)`);
         pars.push(`%${searchString}%`, `%${searchString}%`);
     }
     if (conditions && conditions.length) {
-        wheres.push(`conditions IN (?)`);
+        wheres.push(`qualityCondition IN (?)`);
         pars.push(conditions);
     }
-    if (distanceFromLat && distanceFromLon) {
-        if (distance) {
-            wheres.push(`ST_Distance_Sphere(POINT(latitude, longitude), POINT(?, ?)) / 1000 <= ?`);
-            pars.push(distanceFromLat, distanceFromLon, distance);
-        } else if (orderBy === 'distance') {
-            orderBy = null;
-            orderDir = null;
-        }
-    }
+
     const queryBuilding = `SELECT
           bp_ads.UID as adUID
-        , conditions
+        , qualityCondition
         , price
         , isbn
         , title

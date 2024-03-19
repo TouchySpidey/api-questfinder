@@ -1,7 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = global.authenticators;
+const { adIO } = require('../projectUtils/_projectUtils');
 const fs = require('fs');
+
+router.post('/save', authenticate, async (req, res) => {
+    try {
+        const userUID = req.user.UID;
+        const adData = await adIO.buildAdObject(req.body);
+        if (adData?.error) return res.status(400).send(adData.error);
+
+        global.db.execute(`INSERT INTO bp_ads
+        (UID, userUID, bookCode, info, qualityCondition, price, availableForShipping, latitude, longitude, postedOn)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
+            [adData.adUID, userUID, adData.isbn, adData.info, adData.qualityCondition, adData.price, adData.availableForShipping, adData.latitude, adData.longitude]);
+        return res.status(200).send(adData.adUID);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Internal Server Error");
+    }
+});
 
 router.get('/:adUID', authenticate, async (req, res) => {
     try {
