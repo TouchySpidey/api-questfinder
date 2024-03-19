@@ -21,7 +21,6 @@ router.post('/save', global.authenticators.authenticate, async (req, res) => {
         searchObject.label = req.body.label;
         searchObject.UID = uuidv4();
         searchObject.userUID = req.user.UID;
-        console.log([searchObject.UID, searchObject.userUID, searchObject.searchString, searchObject.conditions, searchObject.distance, searchObject.distanceFromLat, searchObject.distanceFromLon, searchObject.orderBy, searchObject.orderDir, searchObject.label]);
         global.db.execute(`INSERT INTO bp_searches
         (UID, userUID, searchString, conditions, distance, distanceFromLat, distanceFromLon, orderBy, orderDir, label)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

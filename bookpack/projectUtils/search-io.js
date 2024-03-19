@@ -58,7 +58,6 @@ module.exports.parseSearchFromDB = async (searchUID) => {
     const [adsRows] = await global.db.query(`SELECT * FROM bp_searches WHERE UID = ?`, [searchUID]);
     if (!adsRows.length) return null;
     const searchObject = adsRows[0];
-    console.log(searchObject);
     return buildQuery(searchObject);
 }
 

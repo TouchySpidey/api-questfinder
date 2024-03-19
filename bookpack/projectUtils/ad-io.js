@@ -19,9 +19,7 @@ module.exports.buildAdObject = async (vars) => {
         if (price < 0) return { error: "Price can not be negative" };
 
         // qualityCondition must be an integer between 1 and 5
-        console.log({ qualityCondition });
         qualityCondition = parseInt(qualityCondition);
-        console.log({ qualityCondition });
         if (isNaN(qualityCondition) || typeof qualityCondition !== 'number') return { error: "qualityCondition must be a number" };
         if (qualityCondition < 1 || qualityCondition > 5) return { error: "qualityCondition must be between 1 and 5" };
 
