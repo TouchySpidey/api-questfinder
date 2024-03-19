@@ -8,5 +8,6 @@ appRouter.get('/', (req, res) => {
 appRouter.use('/api/backpack', require('./backpack'));
 appRouter.use('/api/books', require('./books'));
 appRouter.use('/api/ads', require('./ads'));
+appRouter.use('/api/search', require('./search'));
 
 module.exports = appRouter;
