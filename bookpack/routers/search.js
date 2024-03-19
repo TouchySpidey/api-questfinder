@@ -40,6 +40,7 @@ router.get('/:searchUID', async (req, res) => {
         const query = await searchIO.parseSearchFromDB(searchUID);
         if (!query) return res.status(404).send("Search not found");
         const [adsRows] = await global.db.query(query);
+        global.db.execute(`UPDATE bp_searches SET lastRunOn = UTC_TIMESTAMP() WHERE UID = ?`, [searchUID]);
         return res.json(adsRows);
     } catch (error) {
         console.error(error);
