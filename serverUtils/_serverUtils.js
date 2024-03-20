@@ -1,5 +1,8 @@
 global.projectUtils = {}; // init for apps to use
 
+// uploads directory
+require('./uploadsDirectoryManager');
+
 // api authenticator
 require('./apiAuthenticator');
 

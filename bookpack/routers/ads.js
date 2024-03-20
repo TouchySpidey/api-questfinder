@@ -3,12 +3,30 @@ const router = express.Router();
 const { authenticate } = global.authenticators;
 const { adIO } = require('../projectUtils/_projectUtils');
 const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
 
-router.post('/save', authenticate, async (req, res) => {
+router.post('/save', authenticate, global.multerUpload.array('pics'), async (req, res) => {
     try {
         const userUID = req.user.UID;
         const adData = await adIO.buildAdObject(req.body);
         if (adData?.error) return res.status(400).send(adData.error);
+
+        const adOriginalFolder = path.join('uploads', 'ads', 'originals', adData.adUID);
+        if (!fs.existsSync(adOriginalFolder)) {
+            fs.mkdirSync(adOriginalFolder);
+        }
+        const adThumbnailFolder = path.join('uploads', 'ads', 'thumbnails', adData.adUID);
+        if (!fs.existsSync(adThumbnailFolder)) {
+            fs.mkdirSync(adThumbnailFolder);
+        }
+
+        req.files.forEach(file => {
+            const oldPath = path.join(file.path);
+            const newPath = path.join(adOriginalFolder, file.originalname);
+            fs.renameSync(oldPath, newPath);
+            sharp(newPath).resize(200, 200).toFile(path.join(adThumbnailFolder, file.originalname));
+        });
 
         global.db.execute(`INSERT INTO bp_ads
         (UID, userUID, bookCode, info, qualityCondition, price, availableForShipping, latitude, longitude, postedOn)
@@ -44,40 +62,59 @@ router.get('/:adUID', authenticate, async (req, res) => {
             user: userRows[0],
             reviews: reviewRows
         };
-        return res.json(adResponse);
+
+        const picsDir = path.join('uploads', 'ads', 'originals', adUID);
+        if (fs.existsSync(picsDir)) adResponse.pics = fs.readdirSync(picsDir);
+        else adResponse.pics = [];
+
+        const thumbDir = path.join('uploads', 'ads', 'originals', adUID);
+        if (fs.existsSync(thumbDir)) adResponse.thumbnails = fs.readdirSync(thumbDir);
+        else adResponse.thumbnails = [];
+
+        return res.status(200).json(adResponse);
     } catch (error) {
         console.error(error);
         return res.status(500).send("Internal Server Error");
     }
 });
 
-router.get('/:adUID/thumbnails', async (req, res) => {
+router.get('/:adUID/thumbnail/:picName', async (req, res) => {
+    return getPic(req, res, 'thumbnails');
+});
+
+router.get('/:adUID/pic/:picName', async (req, res) => {
+    return getPic(req, res, 'originals');
+});
+
+const getPic = (req, res, type) => {
     try {
-        const { adUID } = req.params;
+        const { adUID, picName } = req.params;
         if (!adUID) return res.status(400).send("Bad Request");
 
-        return res.json(getPics(adUID, 'thumbnails'));
+        const thumbDir = path.join('uploads', 'ads', type, adUID);
+        if (!fs.existsSync(thumbDir)) return res.status(404).send("Ad not found");
+        const thumbPath = path.join(thumbDir, picName);
+        if (!fs.existsSync(thumbPath)) return res.status(404).send("Pic not found");
+        return res.status(200).sendFile(path.resolve(thumbPath));
     } catch (error) {
         console.error(error);
         return res.status(500).send("Internal Server Error");
     }
-});
+}
 
 router.get('/:adUID/pics', async (req, res) => {
     try {
         const { adUID } = req.params;
         if (!adUID) return res.status(400).send("Bad Request");
 
-        return res.json(getPics(adUID));
+        const pics = getPics(adUID);
+        if (!pics.length) return res.status(404).send("Ad not found");
+        // serve the first pic
+        return res.sendFile(path.join('uploads', 'ads', 'originals', adUID, pics[0]));
     } catch (error) {
         console.error(error);
         return res.status(500).send("Internal Server Error");
     }
 });
-
-const getPics = (adUID, type = 'originals') => {
-    const directory = `uploads/ads/${type}/${adUID}`;
-    return fs.readdirSync(directory);
-};
 
 module.exports = router;
