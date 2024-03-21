@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = global.authenticators;
-const { adIO } = require('../projectUtils/_projectUtils');
+const { adIO, searchIO } = require('../projectUtils/_projectUtils');
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
@@ -34,6 +34,11 @@ router.post('/save', authenticate, global.multerUpload.array('pics'), async (req
         (UID, userUID, bookCode, info, qualityCondition, price, availableForShipping, latitude, longitude, postedOn)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
             [adData.adUID, userUID, adData.isbn, adData.info, adData.qualityCondition, adData.price, adData.availableForShipping, adData.latitude, adData.longitude]);
+
+        const matchingSearches = await searchIO.matchingSearches(adData);
+        if (matchingSearches.length) {
+            newAdForSearchMail(adData, matchingSearches);
+        }
         return res.status(200).send(adData.adUID);
     } catch (error) {
         console.error(error);
@@ -118,5 +123,34 @@ router.get('/:adUID/pics', async (req, res) => {
         return res.status(500).send("Internal Server Error");
     }
 });
+
+function newAdForSearchMail(adData, matchingSearches) {
+    const { adUID, info, qualityCondition, price, availableForShipping, book } = adData;
+    const subject = "Bookpack — Un nuovo annuncio per la tua ricerca";
+    for (const search of matchingSearches) {
+        const body = `<p>
+            <p><h2>Un nuovo annuncio per la tua ricerca</h2></p>
+            <p>Ciao <b>${search.nickname}</b></p>
+            <p>È appena stato pubblicato un nuovo annuncio che corrisponde alla tua ricerca <b>${search.label}</b>.</p>
+            <p>Controlla subito!</p>
+            <a href="${process.env.FRONTEND_URL}/ad/${adUID}">
+                <div style="border-radius: 4px; border: 1px solid #ff7930; display: flex;">
+                    <div>some pic</div>
+                    <div>
+                        <div>${book.title}</div>
+                        <div>€ ${price}</div>
+                        <div>info del venditore: ${info}</div>
+                        <div>Condizioni: ${qualityCondition}</div>
+                        <div>${search.distance ?? '?'}Km${availableForShipping ? " (disponibile per la spedizione)" : ""}</div>
+                    </div>
+                </div>
+            </a>
+            <a href="${process.env.FRONTEND_URL}/search/${search.UID}">La tua ricerca</a>
+            <p><i>Il team di Bookpack</i></p>
+        </p>`;
+
+        global.sendMail(search.email, subject, body);
+    }
+}
 
 module.exports = router;

@@ -5,8 +5,10 @@ module.exports.buildAdObject = async (vars) => {
         let { isbn, info, price, qualityCondition, latitude, longitude, availableForShipping } = vars;
         const adUID = uuidv4();
 
-        const [bookRows] = await global.db.query(`SELECT isbn FROM bp_books WHERE isbn = ?`, [isbn]);
+        const [bookRows] = await global.db.query(`SELECT * FROM bp_books WHERE isbn = ?`, [isbn]);
         if (!bookRows.length) return { error: "Book not found" };
+
+        const book = bookRows[0];
 
         // info must be a string, max 500 characters
         info = info.trim();
@@ -43,7 +45,8 @@ module.exports.buildAdObject = async (vars) => {
             qualityCondition,
             latitude,
             longitude,
-            availableForShipping
+            availableForShipping,
+            book
         };
     } catch (error) {
         console.error(error);

@@ -104,6 +104,20 @@ const buildSearchObject = module.exports.buildSearchObject = (variables) => {
     }
 }
 
+module.exports.matchingSearches = async (adData) => {
+    const { isbn, latitude, longitude, qualityCondition, availableForShipping } = adData;
+    const query = `SELECT users.email, users.nickname, bp_searches.label, bp_searches.UID, ST_Distance_Sphere(POINT(distanceFromLat, distanceFromLon), POINT(?, ?)) / 1000 AS distance
+    FROM bp_searches
+    LEFT JOIN users
+    ON bp_searches.userUID = users.UID
+    WHERE (searchString IS NULL OR searchString = ?)
+    AND (conditions IS NULL OR conditions LIKE ?)
+    ${availableForShipping ? "" : "AND (distance IS NULL OR ST_Distance_Sphere(POINT(distanceFromLat, distanceFromLon), POINT(?, ?)) / 1000 <= distance)"}
+    AND (lastRunOn < UTC_TIMESTAMP())`;
+    const [searchRows] = await global.db.query(query, [latitude, longitude, isbn, `%${qualityCondition}%`, latitude, longitude]);
+    return searchRows;
+}
+
 module.exports.parseSearchFromRequest = (req) => {
     const searchObject = buildSearchObject(req.query);
     return buildQuery(searchObject);
