@@ -5,6 +5,10 @@ const cors = require('cors');
 const http = require('http');
 const cookieParser = require('cookie-parser');
 
+// log environment and node version
+console.log(`App environment: ${global.APP_ENVIRONMENT}`);
+console.log(`Node version: ${process.version}`);
+
 const app = express();
 const server = http.createServer(app);
 

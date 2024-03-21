@@ -21,11 +21,13 @@ router.post('/save', authenticate, global.multerUpload.array('pics'), async (req
             fs.mkdirSync(adThumbnailFolder);
         }
 
-        req.files.forEach(file => {
+        req.files.forEach((file, index) => {
+            const extension = path.extname(file.originalname);
+            const newFileName = `${(index + 1).toString().padStart(2, '0')}${extension}`;
             const oldPath = path.join(file.path);
-            const newPath = path.join(adOriginalFolder, file.originalname);
+            const newPath = path.join(adOriginalFolder, newFileName);
             fs.renameSync(oldPath, newPath);
-            sharp(newPath).resize(200, 200).toFile(path.join(adThumbnailFolder, file.originalname));
+            sharp(newPath).resize(200, 200).toFile(path.join(adThumbnailFolder, newFileName));
         });
 
         global.db.execute(`INSERT INTO bp_ads
